@@ -1,0 +1,47 @@
+AC_INIT([gteonoma], m4_esyscmd([build-aux/git-version-gen .tarball-version]), [andre@masella.name], [gteonoma], [http://github.com/apmasell/gteonoma])
+AC_CONFIG_SRCDIR([Makefile.am])
+AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_HEADERS(config.h)
+AC_CONFIG_MACRO_DIR([m4])
+AM_INIT_AUTOMAKE([1.11 dist-bzip2])
+AM_MAINTAINER_MODE
+
+# Checks for programs.
+AC_PROG_CC
+AM_PROG_CC_C_O
+AC_DISABLE_STATIC
+AC_PROG_LIBTOOL
+AC_PROG_LN_S
+
+AC_PATH_PROG(VALAC, valac, valac)
+AC_SUBST(VALAC)
+
+AC_PATH_PROG(VALADOC, valadoc, valadoc)
+AC_SUBST(VALADOC)
+AM_CONDITIONAL([ENABLE_VALADOC], [test -n "$VALADOC"])
+
+AC_SUBST(VALAFLAGS)
+AC_SUBST(CFLAGS)
+AC_SUBST(CPPFLAGS)
+AC_SUBST(LDFLAGS)
+
+GLIB_REQUIRED=2.16.0
+PKG_CHECK_MODULES(GLIB, glib-2.0 >= $GLIB_REQUIRED gobject-2.0 >= $GLIB_REQUIRED)
+
+AC_SUBST(GLIB_CFLAGS)
+AC_SUBST(GLIB_LIBS)
+
+PKG_CHECK_MODULES(GEE, gee-0.8, [GEE_VER=0.8], [PKG_CHECK_MODULES(GEE, gee-1.0, [GEE_VER=1.0])])
+
+AC_SUBST(GEE_CFLAGS)
+AC_SUBST(GEE_LIBS)
+AC_SUBST(GEE_VER)
+
+LIB_NAME="lib${PACKAGE_NAME}-$(cat .tarball-version | cut -f 1-2 -d .)"
+AC_SUBST(LIB_NAME)
+
+AC_CONFIG_FILES([
+	Makefile
+	lib.pc
+]) 
+AC_OUTPUT

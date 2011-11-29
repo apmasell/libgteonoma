@@ -1,0 +1,27 @@
+Source: libgteonoma
+Priority: extra
+Maintainer: Andre Masella <andre@masella.name>
+Build-Depends: debhelper (>= 8.0.0), autotools-dev, valac, libgee-dev
+Standards-Version: 3.9.2
+Section: libs
+Homepage: http://github.com/apmasell/libgteonoma
+
+Package: libgteonoma-dev
+Section: libdevel
+Architecture: any
+Depends: libgteonoma0 (= ${binary:Version}), ${misc:Depends}
+Description: Packrat parsing library for GObjects -- Development tools
+ GNeotoma is a packrat parser for Vala and the GObject system. Using
+ predefined objects and parsing rules, it can infer the complete grammar
+ using the type information built into the GObjects.
+ .
+ This package contains header files and Vala bindings.
+
+Package: libgteonoma0
+Section: libs
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Packrat parsing library for GObjects
+ GNeotoma is a packrat parser for Vala and the GObject system. Using
+ predefined objects and parsing rules, it can infer the complete grammar
+ using the type information built into the GObjects.
