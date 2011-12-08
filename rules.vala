@@ -938,14 +938,14 @@ internal class GTeonoma.CustomRule<T> : Rule {
 			}
 			buffer.append_unichar(c);
 			switch (state.next_state(c)) {
-				case CustomParser.State.ACCEPTING:
+				case CustomParser.StateType.ACCEPTING:
 					seen_accepting = true;
 					last_buffer_len = buffer.len;
 					p.mark_reset();
 					break;
-				case CustomParser.State.INTERMEDIATE:
+				case CustomParser.StateType.INTERMEDIATE:
 					break;
-				case CustomParser.State.INVALID:
+				case CustomParser.StateType.INVALID:
 					p.push_error(@"Unexpected $(c.to_string()) in $name.");
 					p.mark_rewind();
 					finished = true;
@@ -983,14 +983,30 @@ public abstract class GTeonoma.CustomParser<T> : Object {
 	/**
 	 * Update the current state given the next character of input.
 	 *
-	 * Return the type of the new state.
+	 * The parser will feed characters to the custom parser one at a time by
+	 * calling this method. After this class has seen a character, it must return
+	 * what it thinks of that character. From a theoretical perspective, this
+	 * class is assumed to be a DFA and is send character one at a time. The type
+	 * of the state the DFA is in is returned, not the DFA state itself. The
+	 * parser then makes a decision about whether to continue with this DFA or
+	 * return.
+	 *
+	 * The parser will mark the last time a state was {@link StateType.ACCEPTING}
+	 * and will continue until it is in state {@link StateType.INVALID}. Once a
+	 * character is rejected, it will rewind to the last accepting state and
+	 * present this input to {@link build_object}. If no accepting state is ever
+	 * reached, parsing will fail.
+	 *
+	 * Obviously, the underlying algorithm need not be a DFA.
+	 *
+	 * @return the type of the new state of the DFA.
 	 */
-	public abstract State next_state(unichar input);
+	public abstract StateType next_state(unichar input);
 
 	/**
 	 * The type of state the parser is currently in.
 	 */
-	public enum State {
+	public enum StateType {
 		/**
 		 * The current input has been accepted.
 		 *

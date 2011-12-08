@@ -23,7 +23,7 @@ internal class GTeonoma.StringLiteralParser : CustomParser<StringLiteral> {
 		HEX2,
 		END,
 		JUNK;
-		internal CustomParser.State get_state() {
+		internal CustomParser.StateType get_state() {
 			switch (this) {
 				case StringState.INIT:
 				case StringState.CONTENTS:
@@ -32,11 +32,11 @@ internal class GTeonoma.StringLiteralParser : CustomParser<StringLiteral> {
 				case StringState.OCTAL3:
 				case StringState.HEX1:
 				case StringState.HEX2:
-					return State.INTERMEDIATE;
+					return StateType.INTERMEDIATE;
 				case StringState.END:
-					return State.ACCEPTING;
+					return StateType.ACCEPTING;
 				default:
-					return State.INVALID;
+					return StateType.INVALID;
 			}
 		}
 	}
@@ -47,7 +47,7 @@ internal class GTeonoma.StringLiteralParser : CustomParser<StringLiteral> {
 		state = StringState.INIT;
 	}
 
-	public override CustomParser.State next_state(unichar input) {
+	public override CustomParser.StateType next_state(unichar input) {
 		switch (state) {
 			case StringState.INIT:
 				if (input == '"') {
@@ -179,15 +179,15 @@ internal class GTeonoma.IdentifierParser : CustomParser<Identifier> {
 		START,
 		PART,
 		JUNK;
-		internal CustomParser.State get_state() {
+		internal CustomParser.StateType get_state() {
 			switch (this) {
 				case IdentifierState.AT:
 				case IdentifierState.START:
-					return State.INTERMEDIATE;
+					return StateType.INTERMEDIATE;
 				case IdentifierState.PART:
-					return State.ACCEPTING;
+					return StateType.ACCEPTING;
 				default:
-					return State.INVALID;
+					return StateType.INVALID;
 			}
 		}
 	}
@@ -200,7 +200,7 @@ internal class GTeonoma.IdentifierParser : CustomParser<Identifier> {
 		this.allow_unicode = allow_unicode;
 	}
 
-	public override CustomParser.State next_state(unichar input) {
+	public override CustomParser.StateType next_state(unichar input) {
 			if (input == '@') {
 				if (state == IdentifierState.AT) {
 					return (state = IdentifierState.START).get_state();
