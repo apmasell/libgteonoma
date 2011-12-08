@@ -9,7 +9,7 @@ For example, take the grammar:
 	<Access> :: = public | private |
 	<Stmt> ::= <int> ; | bar <int> ; | do { <Stmt> } ; | say <string> ;
 
-First, create an object for reach rule in the grammar:
+First, create an object for each rule in the grammar:
 
 	class Foo : Object, SourceInfo {
 		public source_location source {get; set;}
@@ -67,10 +67,10 @@ Notice that each object is registered with a friendly name (that will be output 
 			stdout.printf("ABORT\n");
 			break;
 	}
-	parser.visit_errors((l,s) => { stderr.printf("Parse error %ld:%ld: %s\n", l.line,l.offset,s);});
+	parser.visit_errors((loc, s) => { stderr.printf("Parse error %ld:%ld: %s\n", loc.line, loc.offset, s);});
 
-There is a StringParser and a FileParser, but if another data source is needed, this class can be easily extended. When successfully parsed, the output can be pretty printed with a Printer, in this case, one to the console. All the items in l will now contain a Foo object with the entire parse tree populate.
+There is a StringParser and a FileParser, but if another data source is needed, this class can be easily extended. When successfully parsed, the output can be pretty printed with a Printer; in this case, one to the console. All the items in l will now contain a Foo object with the entire parse tree populate.
 
 When a property's type is a class with derived classes registered, it will try all of the derived classes in the order specified and pick the first successful one. This how parsing expression grammars work and this avoids the nested if-else problem associated with LR(1) parsers that causes shift-reduce conflicts. In the example above, there is no instantiable class for Stmt, but the derived classes Bar, Do, and Say will be parsed in its place.
 
-Because there is no introspection support, compact classes, non-GObject class, and structs cannot be used in parsing. Addtionally, enums and flags can be used so long as they are registered with the GObject system. The nicks are used as parsing strings.
+Because there is no introspection support, compact classes, non-GObject class, and structs cannot be used in parsing. Classes extending GLib.Object and interfaces are supported. Addtionally, enums and flags can be used so long as they are registered with the GObject system (i.e., defined in Vala, not from an external API). The nicks are used as parsing strings.
