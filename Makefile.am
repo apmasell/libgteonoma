@@ -74,7 +74,7 @@ $(libgteonoma_la_SOURCES) $(LIB_NAME).vapi gteonoma.h: $(libgteonoma_la_VALASOUR
 
 if ENABLE_VALADOC
 VALADOCFLAGS = --package-name=$(LIB_NAME) -o doc --force --vapidir=$(top_srcdir)
-vala-doc: $(libgteonoma_la_VALASOURCES) opencl.vapi
+vala-doc: $(libgteonoma_la_VALASOURCES)
 	$(VALADOC) $(VALADOCFLAGS) $^ `for each in $(libgteonoma_la_VALAPKGS); do echo --pkg $$each; done` && touch vala-doc
 endif
 
