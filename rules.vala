@@ -431,16 +431,26 @@ public class GTeonoma.Rules : Object {
 	 * Register a rule for a specified type and all of its ancestral types.
 	 */
 	internal new void set(Type type, Rule rule) {
-		for(; type != Type.INVALID; type = type.parent()) {
-			Gee.List<Rule> list;
-			if (rules.has_key(type)) {
-				list = rules[type];
-			} else {
-				list = new Gee.ArrayList<Rule>();
-				rules[type] = list;
+		var interfaces = type.interfaces();
+		if (interfaces != null) {
+			foreach (var interface_type in interfaces) {
+				set_type(interface_type, rule);
 			}
-			list.add(rule);
 		}
+		for(; type != Type.INVALID; type = type.parent()) {
+			set_type(type, rule);
+		}
+	}
+
+	private void set_type(Type type, Rule rule) {
+		Gee.List<Rule> list;
+		if (rules.has_key(type)) {
+			list = rules[type];
+		} else {
+			list = new Gee.ArrayList<Rule>();
+			rules[type] = list;
+		}
+		list.add(rule);
 	}
 }
 
