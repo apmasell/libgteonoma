@@ -175,7 +175,7 @@ public class GTeonoma.Rules : Object {
 	 *
 	 * @param format the format string if the type is an object; null otherwise.
 	 */
-	public void register<T>(string? name = null, string? format = null, ...) throws RegisterError {
+	public void register<T>(string? name = null, string? format = null, Type[]? types = null) throws RegisterError {
 		var type = typeof(T);
 
 		if (type.is_enum()) {
@@ -199,7 +199,7 @@ public class GTeonoma.Rules : Object {
 			throw new RegisterError.BAD_FORMAT("Format string missing for %s.\n".printf(type.name()));
 		}
 
-		var va = va_list();
+		var index = 0;
 		var obj_class = (ObjectClass)type.class_ref();
 		assert(obj_class != null);
 		chunk[] chunks = {};
@@ -327,7 +327,10 @@ public class GTeonoma.Rules : Object {
 							if(obj_class.find_property(prop_name) == null) {
 								throw new RegisterError.MISSING_PROPERTY("Property %s is not found in %s.\n".printf(prop_name, type.name()));
 							}
-							chunks += chunk(Token.LIST, optional, prop_name, keyword, va.arg<Type>());
+							if (types == null || index >= types.length) {
+								throw new RegisterError.MISSING_TYPES(@"Missing generic type information for list $(prop_name) in $(type.name()).\n");
+							}
+							chunks += chunk(Token.LIST, optional, prop_name, keyword, types[index++]);
 							break;
 						}
 						state = ObjectParseState.TEXT;
@@ -470,6 +473,10 @@ public errordomain GTeonoma.RegisterError {
 	 * Unsupported type.
 	 */
 	BAD_TYPE,
+	/**
+	 * Missing supplementary type information.
+	 */
+	MISSING_TYPES,
 	/**
 	 * Non-existent property reference.
 	 */
