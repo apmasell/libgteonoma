@@ -83,13 +83,13 @@ internal struct GTeonoma.chunk {
 	internal string to_string() {
 		switch (token) {
 			case Token.BOOL:
-				return "%%b{%s}{%s}".printf(property, word);
+				return @"%b{$(property)}{$(word)}";
 			case Token.COMMIT:
 				return "%%!";
 			case Token.LIST:
-				return "%%%c{%s::%s}{%s}".printf(optional ? 'l' : 'L', property, type.name(), word);
+				return @"%$(optional ? 'l' : 'L'){$(property)::$(type.name())}{$(word)}";
 			case Token.PROPERTY:
-				return "%%%c{%s}".printf(optional ? 'p' : 'P', property);
+				return @"%$(optional ? 'p' : 'P'){$(property)}";
 			case Token.SYMBOL:
 				return word;
 		}
@@ -180,23 +180,23 @@ public class GTeonoma.Rules : Object {
 
 		if (type.is_enum()) {
 			if (format != null) {
-				throw new RegisterError.UNNECESSARY_FORMAT("Enumeration %s does not require a format string.".printf(type.name()));
+				throw new RegisterError.UNNECESSARY_FORMAT(@"Enumeration $(type.name()) does not require a format string.");
 			}
 			this[type] = new EnumRule(name, type);
 			return;
 		}
 		if (type.is_flags()) {
 			if (format != null) {
-				throw new RegisterError.UNNECESSARY_FORMAT("Flags %s does not require a format string.".printf(type.name()));
+				throw new RegisterError.UNNECESSARY_FORMAT(@"Flags $(type.name()) does not require a format string.");
 			}
 			this[type] = new FlagsRule(name, type);
 		}
 
 		if (!type.is_a(typeof(Object))) {
-			throw new RegisterError.BAD_TYPE("Type %s is not a flag, enum, or subclass of Object.".printf(type.name()));
+			throw new RegisterError.BAD_TYPE(@"Type $(type.name()) is not a flag, enum, or subclass of Object.");
 		}
 		if (format == null || format.length == 0) {
-			throw new RegisterError.BAD_FORMAT("Format string missing for %s.\n".printf(type.name()));
+			throw new RegisterError.BAD_FORMAT(@"Format string missing for $(type.name()).\n");
 		}
 
 		var index = 0;
@@ -250,7 +250,7 @@ public class GTeonoma.Rules : Object {
 						state = ObjectParseState.START_PROPERTY;
 						break;
 					default:
-						throw new RegisterError.BAD_FORMAT("Unrecognized command %s in format string for %s.\n".printf(c.to_string(), type.name()));
+						throw new RegisterError.BAD_FORMAT(@"Unrecognized command $(c) in format string for $(type.name()).\n");
 				}
 				break;
 			case ObjectParseState.START_BOOL:
@@ -259,7 +259,7 @@ public class GTeonoma.Rules : Object {
 			case ObjectParseState.START_PARSE_BOOL:
 			case ObjectParseState.START_PARSE_LIST:
 					if(c != '{') {
-						throw new RegisterError.BAD_FORMAT("Expected { in format string for %s.\n".printf(type.name()));
+						throw new RegisterError.BAD_FORMAT(@"Expected { in format string for $(type.name()).\n");
 					}
 				first = true;
 				switch (state) {
@@ -286,7 +286,7 @@ public class GTeonoma.Rules : Object {
 				if (c == '}') {
 					prop_name = buffer.str;
 					if(obj_class.find_property(prop_name) == null) {
-						throw new RegisterError.MISSING_PROPERTY("Property %s is not found in %s.\n".printf(prop_name, type.name()));
+						throw new RegisterError.MISSING_PROPERTY(@"Property $(prop_name) is not found in $(type.name()).\n");
 					}
 					buffer.truncate();
 					switch (state) {
@@ -307,7 +307,7 @@ public class GTeonoma.Rules : Object {
 					first = false;
 				} else {
 					if(obj_class.find_property(prop_name) == null) {
-						throw new RegisterError.BAD_FORMAT("Unexpected %s in format string for %s.\n".printf(c.to_string(), type.name()));
+						throw new RegisterError.BAD_FORMAT(@"Unexpected $(c) in format string for $(type.name()).\n");
 					}
 				}
 				break;
@@ -319,13 +319,13 @@ public class GTeonoma.Rules : Object {
 					switch (state) {
 						case ObjectParseState.PARSE_BOOL:
 							if(obj_class.find_property(prop_name) == null) {
-								throw new RegisterError.MISSING_PROPERTY("Property %s is not found in %s.\n".printf(prop_name, type.name()));
+								throw new RegisterError.MISSING_PROPERTY(@"Property $(prop_name) is not found in $(type.name()).\n");
 							}
 							chunks += chunk(Token.BOOL, false, prop_name, keyword);
 							break;
 						case ObjectParseState.PARSE_LIST:
 							if(obj_class.find_property(prop_name) == null) {
-								throw new RegisterError.MISSING_PROPERTY("Property %s is not found in %s.\n".printf(prop_name, type.name()));
+								throw new RegisterError.MISSING_PROPERTY(@"Property $(prop_name) is not found in $(type.name()).\n");
 							}
 							if (types == null || index >= types.length) {
 								throw new RegisterError.MISSING_TYPES(@"Missing generic type information for list $(prop_name) in $(type.name()).\n");
@@ -341,14 +341,14 @@ public class GTeonoma.Rules : Object {
 			}
 		}
 		if (state != ObjectParseState.TEXT) {
-			throw new RegisterError.BAD_FORMAT("Unexpected end of format string for %s.\n".printf(type.name()));
+			throw new RegisterError.BAD_FORMAT(@"Unexpected end of format string for $(type.name()).\n");
 		}
 		if (buffer.len > 0) {
 			chunks += chunk(Token.SYMBOL, false, null, buffer.str);
 			buffer.truncate();
 		}
 		if (chunks.length == 0) {
-			throw new RegisterError.BAD_FORMAT("Empty format string for %s.\n".printf(type.name()));
+			throw new RegisterError.BAD_FORMAT(@"Empty format string for $(type.name()).\n");
 		}
 		var rule = new ObjectRule(name, type, chunks);
 		this[type] = rule;
@@ -358,7 +358,7 @@ public class GTeonoma.Rules : Object {
 	 * Add support for C string literals using {@link StringLiteral}.
 	 */
 	public void register_string_literal() {
-		register_custom<StringLiteral>("string", () => { return new StringLiteralParser(); }, (literal) => { return "\"%s\"".printf(literal.str.escape(""));});
+		register_custom<StringLiteral>("string", () => { return new StringLiteralParser(); }, (literal) => { return @"\"$(literal.str.escape(""))\"";});
 	}
 
 	/**
