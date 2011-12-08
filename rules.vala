@@ -937,11 +937,16 @@ internal class GTeonoma.CustomRule<T> : Rule {
 				break;
 			}
 			buffer.append_unichar(c);
-			switch (state.next_state(c)) {
+			var statetype = state.next_state(c);
+			switch (statetype) {
 				case CustomParser.StateType.ACCEPTING:
+				case CustomParser.StateType.FINAL:
 					seen_accepting = true;
 					last_buffer_len = buffer.len;
 					p.mark_reset();
+					if (statetype == CustomParser.StateType.ACCEPTING) {
+						finished = true;
+					}
 					break;
 				case CustomParser.StateType.INTERMEDIATE:
 					break;
@@ -1021,6 +1026,13 @@ public abstract class GTeonoma.CustomParser<T> : Object {
 		 * It is not a valid state, but it is not invalid and needs more input to settle.
 		 */
 		INTERMEDIATE,
+		/**
+		 * The current input is accepted and no future input will be accepted.
+		 *
+		 * Effectively, this is {@link ACCEPTING} followed by {@link INVALID} for
+		 * any subsequent input.
+		 */
+		FINAL,
 		/**
 		 * The current input is invalid.
 		 *
