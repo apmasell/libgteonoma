@@ -430,7 +430,12 @@ public abstract class GTeonoma.Parser : Object {
 		return result;
 	}
 
-	public Result parse_all<T>(out Gee.List<T> list) {
+	/**
+	 * Parse a stream of objects from the parse stream.
+	 *
+	 * @param separator the format string used in between objects
+	 */
+	public Result parse_all<T>(out Gee.List<T> list, string separator = "%n") {
 		list = new Gee.ArrayList<T>();
 		while(!is_finished()) {
 			Value @value;
@@ -439,6 +444,9 @@ public abstract class GTeonoma.Parser : Object {
 				list.add(@value.get_object());
 			} else {
 				return result;
+			}
+			if (!check_string(separator) && !is_finished()) {
+				return Result.FAIL;
 			}
 		}
 		return Result.OK;
@@ -699,8 +707,14 @@ public abstract class GTeonoma.Printer : Object {
 	/**
 	 * Write a list of objects to the output stream.
 	 */
-	public void print_all(Gee.List<Object> items) {
+	public void print_all(Gee.List<Object> items, string separator = "%n") {
+		var first = true;
 		foreach (var item in items) {
+			if (first) {
+				first = false;
+			} else {
+				append(separator);
+			}
 			print_obj(item);
 		}
 	}
