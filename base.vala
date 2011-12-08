@@ -135,10 +135,29 @@ public abstract class GTeonoma.Parser : Object {
 	 */
 	public string source { get; protected set; }
 
+	/**
+	 * The parsing rules for the types known by this parser.
+	 */
 	private Rules rules;
 
+	/**
+	 * All the memorized (aka packratted) parse results.
+	 *
+	 * There are locations in the parse tree where we have successfully parsed an
+	 * object, but the containing rule failed later. We store the parse results
+	 * here and if we parse the same rule in the same location, we don't reparse,
+	 * we just retrieve from our memory.
+	 */
 	private MemoryBank memories;
 
+	/**
+	 * All of the parse errors for the current context.
+	 *
+	 * This is more than just a list because the errors we need to store will
+	 * depend on whether parse rules commit or succeed later. We want to collect
+	 * errors if parsing fails, but we might try another rule and succeed, and so
+	 * need to ignore those parse errors.
+	 */
 	private ErrorRoot errors;
 
 	protected Parser(Rules rules) {
@@ -239,7 +258,7 @@ public abstract class GTeonoma.Parser : Object {
 	/**
 	 * Get a character from the underlying stream at the current position.
 	 *
-	 * Read one character from the next position in the stream. An application
+	 * Read one character from the next position in the stream. A derived class
 	 * should assume that the index is left unchanged from the last call unless
 	 * {@link reset} was called.
 	 * @param index the last position read in the stream. It should be updated to

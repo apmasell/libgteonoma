@@ -4,6 +4,9 @@
  * That is, a string surrounded by double quotation marks with back-slash escape codes.
  */
 public class GTeonoma.StringLiteral : Object, SourceInfo {
+	/**
+	 * The string literal parsed.
+	 */
 	public string str { get; set;}
 	public source_location source { get; set; }
 }
