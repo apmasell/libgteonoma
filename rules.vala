@@ -951,9 +951,11 @@ internal class GTeonoma.CustomRule<T> : Rule {
 				case CustomParser.StateType.FINAL:
 					seen_accepting = true;
 					last_buffer_len = buffer.len;
-					p.mark_reset();
-					if (statetype == CustomParser.StateType.ACCEPTING) {
+					if (statetype == CustomParser.StateType.FINAL) {
 						finished = true;
+						p.mark_clear();
+					} else {
+						p.mark_reset();
 					}
 					break;
 				case CustomParser.StateType.INTERMEDIATE:
