@@ -617,6 +617,14 @@ internal class GTeonoma.ObjectRule : Rule {
 					var prop_value = get_prop(chunks[index].property, obj);
 					if (chunks[index].optional && prop_value.type().is_object() && prop_value.get_object() == null)
 						continue;
+					if (prop_value.type().is_object()) {
+						/*
+						 * Make our type more specific in the case of alternate rules. Otherwise, we might pick the wrong branch.
+						 */
+						var prop_obj = prop_value.get_object();
+						prop_value = Value(prop_obj.get_type());
+						prop_value.set_object(prop_obj);
+					}
 					p.print(prop_value);
 					break;
 				case Token.LIST:
