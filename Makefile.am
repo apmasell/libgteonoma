@@ -38,7 +38,7 @@ pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = $(LIB_NAME).pc
 
 vapidir = $(datadir)/vala/vapi
-dist_vapi_DATA = $(LIB_NAME).vapi
+dist_vapi_DATA = $(LIB_NAME).vapi $(LIB_NAME).deps
 
 VALAFLAGS = --vapidir=$(top_srcdir) -g -C
 
@@ -68,9 +68,10 @@ libgteonoma_la_SOURCES = \
 	$(libgteonoma_la_VALASOURCES:.vala=.c) \
 	$(NULL)
 
-$(libgteonoma_la_SOURCES) $(LIB_NAME).vapi gteonoma.h: $(libgteonoma_la_VALASOURCES)
+$(libgteonoma_la_SOURCES) $(LIB_NAME).vapi  $(LIB_NAME).deps gteonoma.h: $(libgteonoma_la_VALASOURCES)
 	$(VALAC) $(VALAFLAGS) --library=$(LIB_NAME) -H gteonoma.h $^ `for each in $(libgteonoma_la_VALAPKGS); do echo --pkg $$each; done`
-	@touch $@
+	@touch $<
+	echo $(libgteonoma_la_VALAPKGS) > $(LIB_NAME).deps
 
 if ENABLE_VALADOC
 VALADOCFLAGS = --package-name=$(LIB_NAME) -o doc --force --vapidir=$(top_srcdir)

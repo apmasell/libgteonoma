@@ -32,6 +32,7 @@ debian/files
 debian/lib*/
 debian/tmp
 doc/
+lib*.deps
 lib*.vapi
 libtool
 m4/*lt*
