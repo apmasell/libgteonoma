@@ -1,3 +1,4 @@
+// vim: set ts=2 sw=2 tw=0 :
 /**
  * Template for a rule understood by the parser
  *

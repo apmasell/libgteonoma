@@ -1,3 +1,4 @@
+// vim: set ts=2 sw=2 tw=0 :
 /**
  * Include source file location information in parsed objects.
  *
