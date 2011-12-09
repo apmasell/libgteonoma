@@ -207,6 +207,7 @@ public class GTeonoma.Rules : Object {
 		var state = ObjectParseState.TEXT;
 		string? prop_name = null;
 		var optional = false;
+		var left_recursion = true;
 		var first = false;
 		unichar c;
 		for (int i = 0; format.get_next_char (ref i, out c);) {
@@ -217,16 +218,18 @@ public class GTeonoma.Rules : Object {
 							state = ObjectParseState.COMMAND;
 							break;
 						default:
+							left_recursion &= c.isspace();
 							buffer.append_unichar(c);
 							break;
 					}
 					break;
 			case ObjectParseState.COMMAND:
 				if (c == ' ' || c == 'i' || c == 'I' || c == '%' || c == 'n' || c == '_') {
-						buffer.append_c('%');
-						buffer.append_unichar(c);
-						state = ObjectParseState.TEXT;
-						continue;
+					left_recursion &= c != '%';
+					buffer.append_c('%');
+					buffer.append_unichar(c);
+					state = ObjectParseState.TEXT;
+					continue;
 				}
 				if (buffer.len > 0) {
 					chunks += chunk(Token.SYMBOL, false, null, buffer.str);
@@ -285,7 +288,8 @@ public class GTeonoma.Rules : Object {
 			case ObjectParseState.PROPERTY_PROPERTY:
 				if (c == '}') {
 					prop_name = buffer.str;
-					if(obj_class.find_property(prop_name) == null) {
+					var prop = obj_class.find_property(prop_name);
+					if(prop == null) {
 						throw new RegisterError.MISSING_PROPERTY(@"Property $(prop_name) is not found in $(type.name()).\n");
 					}
 					buffer.truncate();
@@ -297,6 +301,13 @@ public class GTeonoma.Rules : Object {
 							state = ObjectParseState.START_PARSE_LIST;
 							break;
 						case ObjectParseState.PROPERTY_PROPERTY:
+							if (left_recursion) {
+								if (type.is_a(prop.value_type)) {
+									throw new RegisterError.LEFT_RECURSION(@"Left-deep recursion detected for list $(prop_name) in $(type.name()).\n");
+								} else {
+									left_recursion &= !optional;
+								}
+							}
 							chunks += chunk(Token.PROPERTY, optional, prop_name);
 							prop_name = null;
 							state = ObjectParseState.TEXT;
@@ -329,6 +340,13 @@ public class GTeonoma.Rules : Object {
 							}
 							if (types == null || index >= types.length) {
 								throw new RegisterError.MISSING_TYPES(@"Missing generic type information for list $(prop_name) in $(type.name()).\n");
+							}
+							if (left_recursion) {
+								if (type.is_a(types[index])) {
+									throw new RegisterError.LEFT_RECURSION(@"Left-deep recursion detected for list $(prop_name) in $(type.name()).\n");
+								} else {
+									left_recursion &= !optional;
+								}
 							}
 							chunks += chunk(Token.LIST, optional, prop_name, keyword, types[index++]);
 							break;
@@ -477,6 +495,14 @@ public errordomain GTeonoma.RegisterError {
 	 * Missing supplementary type information.
 	 */
 	MISSING_TYPES,
+	/**
+	 * Left deep-recursion detected.
+	 *
+	 * Parsing expression grammars cannot handle non-syntax directed left-deep
+	 * recursion (i.e., ''S = S x'' is invalid, but ''S = "[" S x "]"'' is
+	 * valid).
+	 */
+	LEFT_RECURSION,
 	/**
 	 * Non-existent property reference.
 	 */
