@@ -54,5 +54,5 @@ static void main() {
 			stdout.printf("ABORT\n");
 			break;
 	}
-	parser.visit_errors((loc, s) => { stderr.printf("Parse error %ld:%ld: %s\n", loc.line, loc.offset, s);});
+	parser.visit_errors((loc, s) => { stdout.printf("Parse error %ld:%ld: %s\n", loc.line, loc.offset, s);});
 }

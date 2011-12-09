@@ -70,12 +70,12 @@ class Parenthetical : Unary {
 void parse(Rules rules, string expression) {
 	var parser = new StringParser(rules, expression);
 	Value val;
-	stderr.printf("Parsing `%s'.\n", expression);
+	stdout.printf("Parsing `%s'.\n", expression);
 	switch (parser.parse(typeof(Expression), out val)) {
 		case Result.OK:
 			var printer = new ConsolePrinter(rules);
 			printer.print(val);
-			stderr.printf(" = %f\n", ((Expression)val.get_object()).compute());
+			stdout.printf(" = %f\n", ((Expression)val.get_object()).compute());
 			break;
 		case Result.FAIL:
 			stdout.printf("FAIL\n");
@@ -84,7 +84,7 @@ void parse(Rules rules, string expression) {
 			stdout.printf("ABORT\n");
 			break;
 	}
-	parser.visit_errors((loc, s) => { stderr.printf("Parse error %ld:%ld: %s\n", loc.line, loc.offset, s);});
+	parser.visit_errors((loc, s) => { stdout.printf("Parse error %ld:%ld: %s\n", loc.line, loc.offset, s);});
 }
 
 static void main() {
