@@ -27,7 +27,7 @@ First, create an object for each rule in the grammar:
 		public int64 val { get; set; }
 	}
 
-	class Do : Stmt {
+	class DoStmt : Stmt {
 		public Stmt expr { get; set;}
 	}
 
@@ -44,10 +44,10 @@ Then, create a grammar:
 	rules.register_int(64, typeof(int64));
 	rules.register_string_literal();
 	rules.register_identifier();
-	rules.register<Foo>("foo", "%p{access}%_foo %P{id}% (% %P{info}% ) {%I%n%l{statements}{% ;%n}%i%n}%n", typeof(Stmt));
+	rules.register<Foo>("foo", "%p{access}%_foo %P{id}% (% %P{info}% ) {%I%n%l{statements}{% ;%n}%i%n}%n", new Type[] {typeof(Stmt)});
 	rules.register<Access>();
-	rules.register<Bar>("bar", "%b{is_bar}{bar}%_%P{v}");
-	rules.register<Do>("do", "do%_{% %P{expr}% }");
+	rules.register<Bar>("bar", "%b{is_bar}{bar}%_%P{val}");
+	rules.register<DoStmt>("do", "do%_{% %P{expr}% }");
 	rules.register<Say>("say", "say %P{expr}");
 
 Notice that each object is registered with a friendly name (that will be output to the user in case of error) and a parse string. The %-codes explain exactly how spacing is to be parsed and %p and %P parse properties. The appropriate parse rule is inferred from the type of the property. Similarly, %l and %L parse lists, but since the generic type information is not availble, the type is given as an argument, as with Foo. Now, simply parse text:
@@ -58,7 +58,7 @@ Notice that each object is registered with a friendly name (that will be output 
 		case Result.OK:
 			stdout.printf("OK\n");
 			var printer = new ConsolePrinter(rules);
-			printer.print_all(v);
+			printer.print_all(l);
 			break;
 		case Result.FAIL:
 			stdout.printf("FAIL\n");
