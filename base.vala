@@ -63,6 +63,8 @@ internal struct GTeonoma.mark {
 		this.lines = lines;
 		this.offset = offset;
 		this.last = last;
+		this.last_space = true;
+		this.this_space = true;
 	}
 	/**
 	 * The position in a stream in whatever way is appropriate to the parser.
@@ -80,6 +82,9 @@ internal struct GTeonoma.mark {
 	 * The last character seen.
 	 */
 	unichar last;
+
+	bool last_space;
+	bool this_space;
 }
 
 internal class GTeonoma.ErrorRoot : Object {
@@ -175,7 +180,7 @@ public abstract class GTeonoma.Parser : Object {
 	 */
 	internal bool check_string(string s, string? display_error = null) {
 		mark_set();
-		var space = 0;
+		var space = marks[marks.length - 1].last_space ? 1 : 0;
 		unichar c;
 		for (int i = 0; s.get_next_char (ref i, out c);) {
 			if (c.isspace()) {
@@ -198,6 +203,12 @@ public abstract class GTeonoma.Parser : Object {
 					case '_':
 					case '-':
 						space += consume_whitespace();
+						if (c == '_' && space == 0) {
+							if (display_error != null)
+								push_error(@"Expected whitespace in $(display_error).");
+							mark_rewind();
+							return false;
+						}
 						continue;
 					default:
 						continue;
@@ -246,9 +257,12 @@ public abstract class GTeonoma.Parser : Object {
 			} else {
 				marks[marks.length - 1].offset++;
 			}
+			marks[marks.length - 1].last_space = marks[marks.length - 1].this_space;
+			marks[marks.length - 1].this_space = c.isspace();
 			marks[marks.length - 1].last = consume ? NO_CHAR : c;
 			return c;
 		} else if (consume) {
+			marks[marks.length - 1].last_space = marks[marks.length - 1].this_space;
 			unichar c = marks[marks.length - 1].last;
 			marks[marks.length - 1].last = NO_CHAR;
 			return c;
