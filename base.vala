@@ -182,7 +182,7 @@ public abstract class GTeonoma.Parser : Object {
 				space += consume_whitespace();
 				if (space == 0) {
 					if (display_error != null)
-						push_error("Expected whitespace in $(display_error).");
+						push_error(@"Expected whitespace in $(display_error).");
 					mark_rewind();
 					return false;
 				}
