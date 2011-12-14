@@ -70,7 +70,7 @@ libgteonoma_la_SOURCES = \
 
 $(libgteonoma_la_SOURCES) $(LIB_NAME).vapi  $(LIB_NAME).deps gteonoma.h: $(libgteonoma_la_VALASOURCES)
 	$(VALAC) $(VALAFLAGS) --library=$(LIB_NAME) -H gteonoma.h $^ `for each in $(libgteonoma_la_VALAPKGS); do echo --pkg $$each; done`
-	@touch $<
+	@touch libgteonoma.vala.stamp
 	echo $(libgteonoma_la_VALAPKGS) > $(LIB_NAME).deps
 
 if ENABLE_VALADOC
