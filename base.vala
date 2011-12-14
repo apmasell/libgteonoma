@@ -196,6 +196,7 @@ public abstract class GTeonoma.Parser : Object {
 					case 'n':
 					case ' ':
 					case '_':
+					case '-':
 						space += consume_whitespace();
 						continue;
 					default:
@@ -669,6 +670,10 @@ public abstract class GTeonoma.Printer : Object {
 						for (var count = 0; count < indent; count++) {
 							append_c('\t');
 						}
+						last_space = true;
+						break;
+					case '-':
+						append_c(' ');
 						last_space = true;
 						break;
 					case '_':

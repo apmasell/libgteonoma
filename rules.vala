@@ -158,19 +158,20 @@ public class GTeonoma.Rules : Object {
 	 * causes a new line to be emitted, but no white space is required when
 	 * parsing.<<BR>> ''%''(space) emits no space, but allows white space while
 	 * parsing.<<BR>> ''%_'' emits space only if the last character was not white
-	 * space.<<BR>> ''%I'' and ''%i'' increase and decrease the indentation of
-	 * subsequent lines, respectively.<<BR>> ''%p{''//name//''}'' parses a
-	 * property //name//; using ''p'' versus ''P'' causes the parsing to be
-	 * optional versus mandatory.<<BR>> ''%b{''//name//''}{''//text//''}'' causes
-	 * a boolean property //name// to be set to true if //text// can be parsed
-	 * from the input stream.<<BR>> ''%l{''//name//''}{''//text//''}'' cause a
-	 * list of items, separated by //text// to be parsed an placed into a
-	 * property //name// of type {@link Gee.List}. Using ''l'' versus ''L''
-	 * controls whether the list may be empty or must be non-empty. A type
-	 * argument must be provided after the format string for the contents of the
-	 * list; this type must extend {@link GLib.Object}.<<BR>> ''%!'' causes the
-	 * parser to commit to this course of parsing; the parser will not back-track
-	 * after committing.
+	 * space.<<BR>> ''%-'' does not require space, but emits it when printing.
+	 * ''%I'' and ''%i'' increase and decrease the indentation of subsequent
+	 * lines, respectively.<<BR>> ''%p{''//name//''}'' parses a property
+	 * //name//; using ''p'' versus ''P'' causes the parsing to be optional
+	 * versus mandatory.<<BR>> ''%b{''//name//''}{''//text//''}'' causes a
+	 * boolean property //name// to be set to true if //text// can be parsed from
+	 * the input stream.<<BR>> ''%l{''//name//''}{''//text//''}'' cause a list of
+	 * items, separated by //text// to be parsed an placed into a property
+	 * //name// of type {@link Gee.List}. Using ''l'' versus ''L'' controls
+	 * whether the list may be empty or must be non-empty. A type argument must
+	 * be provided after the format string for the contents of the list; this
+	 * type must extend {@link GLib.Object}.<<BR>> ''%!'' causes the parser to
+	 * commit to this course of parsing; the parser will not back-track after
+	 * committing.
 	 *
 	 * @param name the pretty name for this type when errors are printed
 	 *
@@ -225,7 +226,7 @@ public class GTeonoma.Rules : Object {
 					}
 					break;
 			case ObjectParseState.COMMAND:
-				if (c == ' ' || c == 'i' || c == 'I' || c == '%' || c == 'n' || c == '_') {
+				if (c == ' ' || c == 'i' || c == 'I' || c == '%' || c == 'n' || c == '_' || c == '-') {
 					left_recursion &= c != '%';
 					buffer.append_c('%');
 					buffer.append_unichar(c);
