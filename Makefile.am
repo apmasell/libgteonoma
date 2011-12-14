@@ -74,8 +74,9 @@ $(libgteonoma_la_SOURCES) $(LIB_NAME).vapi  $(LIB_NAME).deps gteonoma.h: $(libgt
 	echo $(libgteonoma_la_VALAPKGS) > $(LIB_NAME).deps
 
 if ENABLE_VALADOC
-VALADOCFLAGS = --package-name=$(LIB_NAME) -o doc --force --vapidir=$(top_srcdir)
+VALADOCFLAGS = --package-name=$(LIB_NAME) -o doc --vapidir=$(top_srcdir)
 vala-doc: $(libgteonoma_la_VALASOURCES)
+	test ! -d doc || rm -r doc
 	$(VALADOC) $(VALADOCFLAGS) $^ `for each in $(libgteonoma_la_VALAPKGS); do echo --pkg $$each; done` && touch vala-doc
 endif
 
