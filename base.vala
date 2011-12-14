@@ -390,13 +390,6 @@ public abstract class GTeonoma.Parser : Object {
 	 * with {@link is_finished}.
 	 */
 	public Result parse(Type type, out Value @value) {
-		var memory = memories[marks[marks.length - 1].lines, marks[marks.length - 1].offset, type];
-		if (memory != null) {
-			@value = memory.result;
-			marks[marks.length - 1] = memory.post_mark;
-			reset(marks[marks.length - 1].index);
-			return Result.OK;
-		}
 
 		var result = Result.FAIL;
 		var old_error = errors;
@@ -407,21 +400,34 @@ public abstract class GTeonoma.Parser : Object {
 
 		@value = Value(type);
 		foreach (var rule in rules[type]) {
-			mark_set();
-			result = rule.parse(this, out @value);
-			if (result == Result.OK || result == Result.ABORT) {
-				mark_clear();
-				break;
+			var memory = memories[marks[marks.length - 1].lines, marks[marks.length - 1].offset, rule];
+			if (memory == null) {
+				mark_set();
+				result = rule.parse(this, out @value);
+
+				memory = new Memory();
+				memory.value = @value;
+				memory.post_mark = marks[marks.length - 1];
+				memory.rule = rule;
+				memory.result = result;
+				memories[start_lines, start_offset] = memory;
+				if (result == Result.OK || result == Result.ABORT) {
+					mark_clear();
+					break;
+				} else {
+					errors = new ErrorRoot.with_sibling(get_location(), errors);
+					mark_rewind();
+				}
 			} else {
-				errors = new ErrorRoot.with_sibling(get_location(), errors);
-				mark_rewind();
+				@value = memory.@value;
+				result = memory.result;
+				if (result == Result.OK || result == Result.ABORT) {
+					marks[marks.length - 1] = memory.post_mark;
+					reset(marks[marks.length - 1].index);
+				}
 			}
 		}
 		if (result == Result.OK) {
-			memory = new Memory();
-			memory.result = @value;
-			memory.post_mark = marks[marks.length - 1];
-			memories[start_lines, start_offset] = memory;
 			errors = old_error;
 		} else if (result == Result.ABORT) {
 			errors.clear_sibling();
@@ -482,8 +488,10 @@ public abstract class GTeonoma.Parser : Object {
 }
 
 internal class GTeonoma.Memory : Object {
-	internal Value result { get; set; }
+	internal Value @value { get; set; }
 	internal mark post_mark { get; set; }
+	internal Rule rule { get; set; }
+	internal Result result { get; set; }
 }
 
 internal class GTeonoma.MemoryBank : Object {
@@ -492,7 +500,7 @@ internal class GTeonoma.MemoryBank : Object {
 		memories = new Gee.TreeMap<int, Gee.TreeMap<int, Gee.List<Memory>>>();
 	}
 
-	internal new Memory? get(int lines, int offset, Type type) {
+	internal new Memory? get(int lines, int offset, Rule rule) {
 		if (!memories.has_key(lines)) {
 			return null;
 		}
@@ -501,7 +509,7 @@ internal class GTeonoma.MemoryBank : Object {
 			return null;
 		}
 		foreach (var memory in line[offset]) {
-			if (memory.result.type().is_a(type)) {
+			if (memory.rule == rule) {
 				return memory;
 			}
 		}
