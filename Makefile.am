@@ -40,6 +40,9 @@ pkgconfig_DATA = $(LIB_NAME).pc
 vapidir = $(datadir)/vala/vapi
 dist_vapi_DATA = $(LIB_NAME).vapi $(LIB_NAME).deps
 
+girdir = $(datadir)/gir-1.0
+dist_gir_DATA = $(LIB_NAME).gir
+
 VALAFLAGS = --vapidir=$(top_srcdir) -g -C
 
 libgteonoma_la_VALAPKGS = \
@@ -68,8 +71,8 @@ libgteonoma_la_SOURCES = \
 	$(libgteonoma_la_VALASOURCES:.vala=.c) \
 	$(NULL)
 
-$(libgteonoma_la_SOURCES) $(LIB_NAME).vapi  $(LIB_NAME).deps gteonoma.h: $(libgteonoma_la_VALASOURCES)
-	$(VALAC) $(VALAFLAGS) --library=$(LIB_NAME) -H gteonoma.h $^ `for each in $(libgteonoma_la_VALAPKGS); do echo --pkg $$each; done`
+$(libgteonoma_la_SOURCES) $(LIB_NAME).vapi $(LIB_NAME).deps $(LIB_NAME).gir gteonoma.h: $(libgteonoma_la_VALASOURCES)
+	$(VALAC) $(VALAFLAGS) --library=$(LIB_NAME) --gir=$(LIB_NAME).gir -H gteonoma.h $^ `for each in $(libgteonoma_la_VALAPKGS); do echo --pkg $$each; done`
 	@touch libgteonoma.vala.stamp
 	echo $(libgteonoma_la_VALAPKGS) > $(LIB_NAME).deps
 

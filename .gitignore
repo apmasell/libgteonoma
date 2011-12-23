@@ -32,6 +32,7 @@ debian/files
 debian/lib*/
 debian/tmp
 doc/
+*.gir
 lib*.deps
 lib*.vapi
 libtool
