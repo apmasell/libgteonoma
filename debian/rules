@@ -11,3 +11,7 @@
 
 %:
 	dh $@ 
+
+.PHONY: override_dh_strip
+override_dh_strip:
+	dh_strip --dbg-package=libgteonoma-dbg

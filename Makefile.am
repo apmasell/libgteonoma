@@ -49,7 +49,7 @@ libgteonoma_la_VALAPKGS = \
 	gee-$(GEE_VER) \
 	$(NULL)
 
-libgteonoma_la_CPPFLAGS = \
+libgteonoma_la_CPPFLAGS = -g \
 	$(GLIB_CFLAGS) \
 	$(GEE_CFLAGS) \
 	$(NULL)
