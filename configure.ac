@@ -42,6 +42,6 @@ AC_SUBST(LIB_NAME)
 
 AC_CONFIG_FILES([
 	Makefile
-	lib.pc
 ]) 
+AC_CONFIG_FILES(${LIB_NAME}.pc:lib.pc.in, [], [LIB_NAME=$LIB_NAME])
 AC_OUTPUT

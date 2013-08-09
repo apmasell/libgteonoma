@@ -7,7 +7,6 @@
 *.stamp
 .deps
 .libs
-.version
 ChangeLog
 INSTALL
 Makefile
@@ -40,4 +39,3 @@ m4/*lt*
 m4/libtool.m4
 stamp-h1
 vala-doc
-version.h
