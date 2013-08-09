@@ -5,14 +5,8 @@ abstract class Expression : Object, SourceInfo {
 	public abstract double compute();
 }
 
-abstract class Product : Expression {
-}
-
-abstract class Unary : Product {
-}
-
 class Addition : Expression {
-	public Product left { get; set; }
+	public Expression left { get; set; }
 	public Expression right { get; set; }
 	public override double compute() {
 		return left.compute() + right.compute();
@@ -20,16 +14,16 @@ class Addition : Expression {
 }
 
 class Subtraction : Expression {
-	public Product left { get; set; }
+	public Expression left { get; set; }
 	public Expression right { get; set; }
 	public override double compute() {
 		return left.compute() - right.compute();
 	}
 }
 
-abstract class BalanceProduct : Product {
-	public Unary left { get; set; }
-	public Product right { get; set; }
+abstract class BalanceProduct : Expression {
+	public Expression left { get; set; }
+	public Expression right { get; set; }
 	protected abstract double compute_val(double left, double right);
 	public override double compute() {
 		if (right is BalanceProduct) {
@@ -53,14 +47,14 @@ class Division : BalanceProduct {
 	}
 }
 
-class Literal : Unary {
+class Literal : Expression {
 	public int32 val { get; set; }
 	public override double compute() {
 		return val;
 	}
 }
 
-class Parenthetical : Unary {
+class Parenthetical : Expression {
 	public Expression expr { get; set; }
 	public override double compute() {
 		return expr.compute();
@@ -90,12 +84,12 @@ void parse(Rules rules, string expression) {
 static void main() {
 	var rules = new Rules();
 	rules.register_int(32, typeof(int32));
-	rules.register<Multiplication>("multiplication", "%P{left}% *% %P{right}");
-	rules.register<Division>("division", "%P{left}% /% %P{right}");
-	rules.register<Addition>("addition", "%P{left}% +% %P{right}");
-	rules.register<Subtraction>("subtraction", "%P{left}% -% %P{right}");
-	rules.register<Parenthetical>("subexpression", "% (% %P{expr}% )");
-	rules.register<Literal>("number", "% %P{val}");
+	rules.register<Multiplication>("multiplication", 1, "%P{left}% *% %P{right}");
+	rules.register<Division>("division", 1, "%P{left}% /% %P{right}");
+	rules.register<Addition>("addition", 0, "%P{left}% +% %P{right}");
+	rules.register<Subtraction>("subtraction", 0, "%P{left}% -% %P{right}");
+	rules.register<Parenthetical>("subexpression", 2, "% (% %P{expr}% )");
+	rules.register<Literal>("number", 2, "% %P{val}");
 
 	parse(rules, "3+ 5");
 	parse(rules, "3+ 5*10");

@@ -404,7 +404,7 @@ public abstract class GTeonoma.Parser : Object {
 	 * parser. There may be more parseable data in the stream. This can be tested
 	 * with {@link is_finished}.
 	 */
-	public Result parse(Type type, out Value @value) {
+	public Result parse(Type type, out Value @value, uint precedence = 0) {
 
 		var result = Result.FAIL;
 		var old_error = errors;
@@ -414,7 +414,7 @@ public abstract class GTeonoma.Parser : Object {
 		var start_offset = marks[marks.length - 1].offset;
 
 		@value = Value(type);
-		foreach (var rule in rules[type]) {
+		foreach (var rule in rules[type, precedence]) {
 			var memory = memories[marks[marks.length - 1].lines, marks[marks.length - 1].offset, rule];
 			if (memory == null) {
 				mark_set();

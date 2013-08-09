@@ -6,6 +6,7 @@
  */
 internal abstract class GTeonoma.Rule : Object {
 	internal string name { get; protected set; }
+	internal uint precedence { get; protected set; }
 	/**
 	 * Parse a particular value from the parse stream.
 	 */
@@ -46,16 +47,53 @@ internal enum GTeonoma.Token {
 	SYMBOL
 }
 
+internal enum GTeonoma.NextPrecedence {
+	RESET,
+	SAME,
+	HIGHER;
+	internal uint get(uint current_precedence) {
+		switch (this) {
+			case NextPrecedence.RESET:
+				return 0;
+			case NextPrecedence.SAME:
+				return current_precedence;
+			case NextPrecedence.HIGHER:
+				return current_precedence + 1;
+			default:
+				assert_not_reached();
+		}
+	}
+}
+
 /**
  * A unit of parsing to be done for an object.
  */
 internal struct GTeonoma.chunk {
-	chunk(Token token, bool optional = false, string? property = null, string? word = null, Type type = Type.INVALID) {
-		this.token = token;
+	internal chunk.bool(string property, string word) {
+		token = Token.BOOL;
+		this.property = property;
+		this.word = word;
+	}
+	internal chunk.commit() {
+		token = Token.COMMIT;
+	}
+	internal chunk.list(string property, string word, Type type, bool optional, NextPrecedence next) {
+		token = Token.LIST;
 		this.optional = optional;
+		this.next = next;
 		this.property = property;
 		this.word = word;
 		this.type = type;
+	}
+	internal chunk.prop(string property, bool optional, NextPrecedence next) {
+		token = Token.PROPERTY;
+		this.optional = optional;
+		this.next = next;
+		this.property = property;
+	}
+	internal chunk.symbol(string word) {
+		token = Token.SYMBOL;
+		this.word = word;
 	}
 	/**
 	 * The kind of parse action needed.
@@ -73,6 +111,10 @@ internal struct GTeonoma.chunk {
 	 * Whether this action can be skipped.
 	 */
 	bool optional;
+	/**
+	 * The next precedence level for parsing this chunk.
+	 */
+	NextPrecedence next;
 	/**
 	 * The type relevant to this action.
 	 */
@@ -133,14 +175,51 @@ public class GTeonoma.Rules : Object {
 	/**
 	 * Retrieve the correct rule for a particular type
 	 */
-	internal new Gee.List<Rule> get(Type type) {
+	internal new Gee.List<Rule> get(Type type, uint precedence = 0) {
+		var list = new Gee.ArrayList<Rule>();
 		if (rules.has_key(type)) {
-			return rules[type].read_only_view;
-		} else {
-			var list = new Gee.ArrayList<Rule>();
+			foreach (var rule in rules[type]) {
+				if (rule.precedence >= precedence) {
+					list.add(rule);
+				}
+			}
+		}
+		if (list.size == 0) {
 			list.add(new FailRule(type));
-			rules[type] = list;
-			return list.read_only_view;
+		}
+		return list;
+	}
+
+	NextPrecedence get_next_precedence(char modifier, string prop_name, Type type, Type prop_type, ref bool left_recursion, bool optional) throws RegisterError {
+		switch (modifier) {
+			case '\0':
+				/* We could recurse infinitely, and the grammar hasn't told
+				 * use what to do. Assume we are to raise precedence. */
+				if (left_recursion && type.is_a(prop_type)) {
+					left_recursion = false;
+					return NextPrecedence.HIGHER;
+				} else {
+					/* We are going in to some other rule family. */
+					left_recursion &= !optional;
+					return NextPrecedence.RESET;
+				}
+			case '+':
+				if (type.is_a(prop_type)) {
+					left_recursion &= !optional;
+					return NextPrecedence.HIGHER;
+				} else {
+					throw new RegisterError.LEFT_RECURSION(@"Property $(prop_name) requests higher precedence than current rule, but it is not of the same type.");
+				}
+			case '-':
+				if (left_recursion && type.is_a(prop_type)) {
+					throw new RegisterError.LEFT_RECURSION(@"Property $(prop_name) requests lower precedence than current rule, but this will cause left-deep recursion.");
+				} else if (type.is_a(prop_type)) {
+					return NextPrecedence.RESET;
+				} else {
+					throw new RegisterError.LEFT_RECURSION(@"Property $(prop_name) requests lower precedence than current rule, but it is not of the same type.");
+				}
+			default:
+				throw new RegisterError.BAD_FORMAT(@"Unknown modifier $(modifier) on $(prop_name).");
 		}
 	}
 
@@ -173,11 +252,39 @@ public class GTeonoma.Rules : Object {
 	 * commit to this course of parsing; the parser will not back-track after
 	 * committing.
 	 *
+	 * For properties and lists, the property name may be preceded by ''+'' or
+	 * ''-'', which influence how recursion occurs. If a property has the same
+	 * type as the object being parsed, the parser could recurse infinitely; this
+	 * is left-deep recursion. By default, if left-deep recursion is detected in
+	 * the grammar, the parser will only parse rules which are of higher
+	 * precedence will be follow. Any property which would not cause left-deep
+	 * recursion will be parsed at the same precedence level. However, this is
+	 * can be explicitly controlled using the modifiers. By prefixing with ''+'',
+	 * the property will always only parse higher-precedence rules. By prefixing
+	 * with ''-'', the property will parse lower-precedence rules; though it
+	 * cannot be left-deep recursion.
+	 *
+	 * This is admittedly confusing, but consider it in the following way for
+	 * simple algebraic rules: addition and subtraction should have precedence 0;
+	 * multiplication and division should have precedence 1; literals, variables,
+	 * and parenthesis should have precedence 2. The left expression of addition,
+	 * subtraction, multiplication, and division rules should be marked with
+	 * ''+'', though this will be inferred if unspecified. The expression in the
+	 * brackets rule should be marked with ''-''.
+	 *
 	 * @param name the pretty name for this type when errors are printed
+	 *
+	 * @param precedence the precedence of the rule, 0 being the lowest
+	 * precedence. Given an algebraic expression, it is useful to have the same
+	 * type for all the operations even though the multiplication should have
+	 * higher precedence than the addition. Rather than having the object
+	 * hierarchy support this, this argument can be used to control nesting. By
+	 * increasing this value for the different expressions, a hierarchy can be
+	 * made.
 	 *
 	 * @param format the format string if the type is an object; null otherwise.
 	 */
-	public void register<T>(string? name = null, string? format = null, Type[]? types = null) throws RegisterError {
+	public void register<T>(string? name = null, uint precedence = 0, string? format = null, Type[]? types = null) throws RegisterError {
 		var type = typeof(T);
 
 		if (type.is_enum()) {
@@ -207,6 +314,7 @@ public class GTeonoma.Rules : Object {
 		chunk[] chunks = {};
 		var buffer = new StringBuilder();
 		var state = ObjectParseState.TEXT;
+		char modifier = '\0';
 		string? prop_name = null;
 		var optional = false;
 		var left_recursion = true;
@@ -227,20 +335,19 @@ public class GTeonoma.Rules : Object {
 					break;
 			case ObjectParseState.COMMAND:
 				if (c == ' ' || c == 'i' || c == 'I' || c == '%' || c == 'n' || c == '_' || c == '-') {
-					left_recursion &= c != '%';
 					buffer.append_c('%');
 					buffer.append_unichar(c);
 					state = ObjectParseState.TEXT;
 					continue;
 				}
 				if (buffer.len > 0) {
-					chunks += chunk(Token.SYMBOL, false, null, buffer.str);
+					chunks += chunk.symbol(buffer.str);
 					buffer.truncate();
 				}
 				optional = c.islower();
 				switch (c) {
 					case '!':
-						chunks += chunk (Token.COMMIT);
+						chunks += chunk.commit();
 						state = ObjectParseState.TEXT;
 						break;
 					case 'b':
@@ -290,6 +397,11 @@ public class GTeonoma.Rules : Object {
 			case ObjectParseState.PROPERTY_PROPERTY:
 				if (c == '}') {
 					prop_name = buffer.str;
+					modifier = '\0';
+					if (!prop_name[0].isalnum()) {
+						modifier = prop_name[0];
+						prop_name = prop_name[1 : prop_name.length];
+					}
 					var prop = obj_class.find_property(prop_name);
 					if(prop == null) {
 						throw new RegisterError.MISSING_PROPERTY(@"Property $(prop_name) is not found in $(type.name()).\n");
@@ -303,14 +415,7 @@ public class GTeonoma.Rules : Object {
 							state = ObjectParseState.START_PARSE_LIST;
 							break;
 						case ObjectParseState.PROPERTY_PROPERTY:
-							if (left_recursion) {
-								if (type.is_a(prop.value_type)) {
-									throw new RegisterError.LEFT_RECURSION(@"Left-deep recursion detected for list $(prop_name) in $(type.name()).\n");
-								} else {
-									left_recursion &= !optional;
-								}
-							}
-							chunks += chunk(Token.PROPERTY, optional, prop_name);
+							chunks += chunk.prop(prop_name, optional, get_next_precedence(modifier, prop_name, type, prop.value_type, ref left_recursion, optional));
 							prop_name = null;
 							state = ObjectParseState.TEXT;
 							break;
@@ -334,7 +439,7 @@ public class GTeonoma.Rules : Object {
 							if(obj_class.find_property(prop_name) == null) {
 								throw new RegisterError.MISSING_PROPERTY(@"Property $(prop_name) is not found in $(type.name()).\n");
 							}
-							chunks += chunk(Token.BOOL, false, prop_name, keyword);
+							chunks += chunk.bool(prop_name, keyword);
 							break;
 						case ObjectParseState.PARSE_LIST:
 							if(obj_class.find_property(prop_name) == null) {
@@ -343,14 +448,7 @@ public class GTeonoma.Rules : Object {
 							if (types == null || index >= types.length) {
 								throw new RegisterError.MISSING_TYPES(@"Missing generic type information for list $(prop_name) in $(type.name()).\n");
 							}
-							if (left_recursion) {
-								if (type.is_a(types[index])) {
-									throw new RegisterError.LEFT_RECURSION(@"Left-deep recursion detected for list $(prop_name) in $(type.name()).\n");
-								} else {
-									left_recursion &= !optional;
-								}
-							}
-							chunks += chunk(Token.LIST, optional, prop_name, keyword, types[index++]);
+							chunks += chunk.list(prop_name, keyword, types[index++], optional, get_next_precedence(modifier, prop_name, type, types[index], ref left_recursion, optional));
 							break;
 						}
 						state = ObjectParseState.TEXT;
@@ -364,13 +462,13 @@ public class GTeonoma.Rules : Object {
 			throw new RegisterError.BAD_FORMAT(@"Unexpected end of format string for $(type.name()).\n");
 		}
 		if (buffer.len > 0) {
-			chunks += chunk(Token.SYMBOL, false, null, buffer.str);
+			chunks += chunk.symbol(buffer.str);
 			buffer.truncate();
 		}
 		if (chunks.length == 0) {
 			throw new RegisterError.BAD_FORMAT(@"Empty format string for $(type.name()).\n");
 		}
-		var rule = new ObjectRule(name, type, chunks);
+		var rule = new ObjectRule(name, type, precedence, chunks);
 		this[type] = rule;
 	}
 
@@ -543,11 +641,12 @@ internal class GTeonoma.ObjectRule : Rule {
 	private ObjectClass obj_type;
 	private chunk[] chunks;
 
-	internal ObjectRule(string name, Type type, chunk[] chunks) {
+	internal ObjectRule(string name, Type type, uint precedence, chunk[] chunks) {
 		this.name = name;
 		this.type = type;
 		this.obj_type = (ObjectClass)type.class_ref();
 		this.chunks = chunks;
+		this.precedence = precedence;
 	}
 
 	internal override Result parse(Parser p, out Value ret_value) {
@@ -574,7 +673,7 @@ internal class GTeonoma.ObjectRule : Rule {
 					p.mark_set();
 					var prop = obj_type.find_property(chunks[index].property);
 					assert (prop != null);
-					var result = p.parse(prop.value_type, out prop_value);
+					var result = p.parse(prop.value_type, out prop_value, chunks[index].next[precedence]);
 					if (result == Result.OK) {
 						obj.set_property(chunks[index].property, prop_value);
 						p.mark_clear();
@@ -592,7 +691,7 @@ internal class GTeonoma.ObjectRule : Rule {
 					Value child_value;
 					Result result;
 					p.mark_set();
-					while ((result = p.parse(chunks[index].type, out child_value)) == Result.OK) {
+					while ((result = p.parse(chunks[index].type, out child_value, chunks[index].next[precedence])) == Result.OK) {
 						list.add(child_value.get_object());
 						p.mark_reset();
 						if (!p.check_string(chunks[index].word))
