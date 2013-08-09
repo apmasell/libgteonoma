@@ -237,27 +237,27 @@ public class GTeonoma.Rules : Object {
 	 * causes a new line to be emitted, but no white space is required when
 	 * parsing.<<BR>> ''%''(space) emits no space, but allows white space while
 	 * parsing.<<BR>> ''%_'' emits space only if the last character was not white
-	 * space.<<BR>> ''%-'' does not require space, but emits it when printing.
-	 * ''%I'' and ''%i'' increase and decrease the indentation of subsequent
-	 * lines, respectively.<<BR>> ''%p{''//name//''}'' parses a property
-	 * //name//; using ''p'' versus ''P'' causes the parsing to be optional
-	 * versus mandatory.<<BR>> ''%b{''//name//''}{''//text//''}'' causes a
-	 * boolean property //name// to be set to true if //text// can be parsed from
-	 * the input stream.<<BR>> ''%l{''//name//''}{''//text//''}'' cause a list of
-	 * items, separated by //text// to be parsed an placed into a property
-	 * //name// of type {@link Gee.List}. Using ''l'' versus ''L'' controls
-	 * whether the list may be empty or must be non-empty. A type argument must
-	 * be provided after the format string for the contents of the list; this
-	 * type must extend {@link GLib.Object}.<<BR>> ''%!'' causes the parser to
-	 * commit to this course of parsing; the parser will not back-track after
-	 * committing.
+	 * space.<<BR>> ''%-'' does not require space, but emits it when
+	 * printing.<<BR>> ''%I'' and ''%i'' increase and decrease the indentation of
+	 * subsequent lines, respectively.<<BR>> ''%p{''//name//''}'' parses a
+	 * property //name//; using ''p'' versus ''P'' causes the parsing to be
+	 * optional versus mandatory.<<BR>> ''%b{''//name//''}{''//text//''}'' causes
+	 * a boolean property //name// to be set to true if //text// can be parsed
+	 * from the input stream.<<BR>> ''%l{''//name//''}{''//text//''}'' cause a
+	 * list of items, separated by //text// to be parsed an placed into a
+	 * property //name// of type {@link Gee.List}. Using ''l'' versus ''L''
+	 * controls whether the list may be empty or must be non-empty. A type
+	 * argument must be provided after the format string for the contents of the
+	 * list; this type must extend {@link GLib.Object}.<<BR>> ''%!'' causes the
+	 * parser to commit to this course of parsing; the parser will not back-track
+	 * after committing.
 	 *
 	 * For properties and lists, the property name may be preceded by ''+'' or
 	 * ''-'', which influence how recursion occurs. If a property has the same
 	 * type as the object being parsed, the parser could recurse infinitely; this
 	 * is left-deep recursion. By default, if left-deep recursion is detected in
 	 * the grammar, the parser will only parse rules which are of higher
-	 * precedence will be follow. Any property which would not cause left-deep
+	 * precedence will be followed. Any property which would not cause left-deep
 	 * recursion will be parsed at the same precedence level. However, this is
 	 * can be explicitly controlled using the modifiers. By prefixing with ''+'',
 	 * the property will always only parse higher-precedence rules. By prefixing
