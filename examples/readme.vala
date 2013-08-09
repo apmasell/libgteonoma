@@ -33,11 +33,11 @@ static void main() {
 	rules.register_int(64, typeof(int64));
 	rules.register_string_literal();
 	rules.register_identifier();
-	rules.register<Foo>("foo", "%p{access}%_foo %P{id}% (% %P{info}% ) {%I%n%l{statements}{% ;%n}%i%n}%n", new Type[] {typeof(Stmt)});
+	rules.register<Foo>("foo", 0, "%p{access}%_foo %P{id}% (% %P{info}% ) {%I%n%l{statements}{% ;%n}%i%n}%n", new Type[] {typeof(Stmt)});
 	rules.register<Access>();
-	rules.register<Bar>("bar", "%b{is_bar}{bar}%_%P{val}");
-	rules.register<DoStmt>("do", "do%_{% %P{expr}% }");
-	rules.register<Say>("say", "say %P{expr}");
+	rules.register<Bar>("bar", 0, "%b{is_bar}{bar}%_%P{val}");
+	rules.register<DoStmt>("do", 0, "do%_{% %P{expr}% }");
+	rules.register<Say>("say", 0, "say %P{expr}");
 
 	var parser = new StringParser(rules, "private foo _s (\"f\\x0A\\n\") { 3; 0; do {bar 0x5f}; say \"yo\"}");
 	Gee.List<Foo> l;
