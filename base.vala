@@ -404,8 +404,11 @@ public abstract class GTeonoma.Parser : Object {
 	 * parser. There may be more parseable data in the stream. This can be tested
 	 * with {@link is_finished}.
 	 */
-	public Result parse(Type type, out Value @value, uint precedence = 0) {
+	public Result parse(Type type, out Value @value) {
+		return parse_type(type, out @value, 0, 0);
+	}
 
+	internal Result parse_type(Type type, out Value @value, uint precedence, uint depth) {
 		var result = Result.FAIL;
 		var old_error = errors;
 		errors = new ErrorRoot.with_parent(get_location(), errors);
@@ -418,7 +421,7 @@ public abstract class GTeonoma.Parser : Object {
 			var memory = memories[marks[marks.length - 1].lines, marks[marks.length - 1].offset, rule];
 			if (memory == null) {
 				mark_set();
-				result = rule.parse(this, out @value);
+				result = rule.parse(this, out @value, depth);
 
 				memory = new Memory();
 				memory.value = @value;

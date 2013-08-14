@@ -10,7 +10,7 @@ internal abstract class GTeonoma.Rule : Object {
 	/**
 	 * Parse a particular value from the parse stream.
 	 */
-	internal abstract Result parse(Parser p, out Value ret_value);
+	internal abstract Result parse(Parser p, out Value ret_value, uint depth);
 	/**
 	 * Pretty-print the parsed value.
 	 */
@@ -159,6 +159,24 @@ internal enum GTeonoma.ObjectParseState {
 	TEXT
 }
 
+internal class GTeonoma.OrderedRule {
+	internal Rule rule;
+	internal int order;
+	internal OrderedRule(Rule rule, int order) {
+		this.rule = rule;
+		this.order = order;
+	}
+	internal static int compare(OrderedRule a, OrderedRule b) {
+		if (a.rule.precedence > b.rule.precedence) {
+			return 1;
+		}
+		if (a.rule.precedence < b.rule.precedence) {
+			return -1;
+		}
+		return a.order - b.order;
+	}
+}
+
 /**
  * A collection of parse rules
  *
@@ -166,10 +184,10 @@ internal enum GTeonoma.ObjectParseState {
  * corresponding types.
  */
 public class GTeonoma.Rules : Object {
-	private Gee.HashMap<Type, Gee.List<Rule>> rules;
+	private Gee.HashMap<Type, Gee.TreeSet<OrderedRule>> rules;
 
 	public Rules() {
-		rules = new Gee.HashMap<Type, Gee.List<Rule>>();
+		rules = new Gee.HashMap<Type, Gee.TreeSet<OrderedRule>>();
 	}
 
 	/**
@@ -178,9 +196,9 @@ public class GTeonoma.Rules : Object {
 	internal new Gee.List<Rule> get(Type type, uint precedence = 0) {
 		var list = new Gee.ArrayList<Rule>();
 		if (rules.has_key(type)) {
-			foreach (var rule in rules[type]) {
-				if (rule.precedence >= precedence) {
-					list.add(rule);
+			foreach (var o_rule in rules[type]) {
+				if (o_rule.rule.precedence >= precedence) {
+					list.add(o_rule.rule);
 				}
 			}
 		}
@@ -196,7 +214,7 @@ public class GTeonoma.Rules : Object {
 				/* We could recurse infinitely, and the grammar hasn't told
 				 * use what to do. Assume we are to raise precedence. */
 				if (left_recursion && type.is_a(prop_type)) {
-					left_recursion = false;
+					left_recursion &= !optional;
 					return NextPrecedence.HIGHER;
 				} else {
 					/* We are going in to some other rule family. */
@@ -374,6 +392,7 @@ public class GTeonoma.Rules : Object {
 						throw new RegisterError.BAD_FORMAT(@"Expected { in format string for $(type.name()).\n");
 					}
 				first = true;
+				modifier = '\0';
 				switch (state) {
 					case ObjectParseState.START_BOOL:
 						state = ObjectParseState.PROPERTY_BOOL;
@@ -397,11 +416,6 @@ public class GTeonoma.Rules : Object {
 			case ObjectParseState.PROPERTY_PROPERTY:
 				if (c == '}') {
 					prop_name = buffer.str;
-					modifier = '\0';
-					if (!prop_name[0].isalnum()) {
-						modifier = prop_name[0];
-						prop_name = prop_name[1 : prop_name.length];
-					}
 					var prop = obj_class.find_property(prop_name);
 					if(prop == null) {
 						throw new RegisterError.MISSING_PROPERTY(@"Property $(prop_name) is not found in $(type.name()).\n");
@@ -420,6 +434,8 @@ public class GTeonoma.Rules : Object {
 							state = ObjectParseState.TEXT;
 							break;
 					}
+				} else if (first && (c == '+' || c == '-')) {
+					modifier = (char) c;
 				} else if (Parser.is_identifier(c, first)) {
 					buffer.append_unichar(c);
 					first = false;
@@ -564,14 +580,14 @@ public class GTeonoma.Rules : Object {
 	}
 
 	private void set_type(Type type, Rule rule) {
-		Gee.List<Rule> list;
+		Gee.TreeSet<OrderedRule> list;
 		if (rules.has_key(type)) {
 			list = rules[type];
 		} else {
-			list = new Gee.ArrayList<Rule>();
+			list = new Gee.TreeSet<OrderedRule>(OrderedRule.compare);
 			rules[type] = list;
 		}
-		list.add(rule);
+		list.add(new OrderedRule(rule, list.size));
 	}
 }
 
@@ -620,7 +636,7 @@ internal class GTeonoma.FailRule : Rule {
 		error = @"Internal error: No rule for type `$(type.name())'.";
 	}
 
-	internal override Result parse(Parser p, out Value @value) {
+	internal override Result parse(Parser p, out Value @value, uint depth) {
 		@value = Value(typeof(Object));
 		p.push_error(error);
 		return Result.ABORT;
@@ -649,7 +665,7 @@ internal class GTeonoma.ObjectRule : Rule {
 		this.precedence = precedence;
 	}
 
-	internal override Result parse(Parser p, out Value ret_value) {
+	internal override Result parse(Parser p, out Value ret_value, uint depth) {
 		ret_value = Value(type);
 		var obj = Object.new(type);
 		if (obj is SourceInfo) {
@@ -673,7 +689,7 @@ internal class GTeonoma.ObjectRule : Rule {
 					p.mark_set();
 					var prop = obj_type.find_property(chunks[index].property);
 					assert (prop != null);
-					var result = p.parse(prop.value_type, out prop_value, chunks[index].next[precedence]);
+					var result = p.parse_type(prop.value_type, out prop_value, chunks[index].next[precedence], depth + 1);
 					if (result == Result.OK) {
 						obj.set_property(chunks[index].property, prop_value);
 						p.mark_clear();
@@ -691,7 +707,7 @@ internal class GTeonoma.ObjectRule : Rule {
 					Value child_value;
 					Result result;
 					p.mark_set();
-					while ((result = p.parse(chunks[index].type, out child_value, chunks[index].next[precedence])) == Result.OK) {
+					while ((result = p.parse_type(chunks[index].type, out child_value, chunks[index].next[precedence], depth + 1)) == Result.OK) {
 						list.add(child_value.get_object());
 						p.mark_reset();
 						if (!p.check_string(chunks[index].word))
@@ -791,7 +807,7 @@ internal class GTeonoma.EnumRule : Rule {
 		this.enum_class = (EnumClass)type.class_ref();
 	}
 
-	internal override Result parse(Parser p, out Value @value) {
+	internal override Result parse(Parser p, out Value @value, uint depth) {
 		@value = Value(type);
 		var word = p.get_word();
 		var enum_value = enum_class.get_value_by_nick(word);
@@ -823,7 +839,7 @@ internal class GTeonoma.FlagsRule : Rule {
 		this.flags_class = (FlagsClass)type.class_ref();
 	}
 
-	internal override Result parse(Parser p, out Value @value) {
+	internal override Result parse(Parser p, out Value @value, uint depth) {
 		@value = Value(type);
 		while(true) {
 			p.mark_set();
@@ -871,7 +887,7 @@ internal abstract class GTeonoma.IntegerRule : Rule {
 		this.type = type;
 	}
 
-	internal override Result parse(Parser p, out Value @value) {
+	internal override Result parse(Parser p, out Value @value, uint depth) {
 		@value = Value(type);
 		unichar c;
 		uint64 accumulator = 0;
@@ -1052,7 +1068,7 @@ internal class GTeonoma.CustomRule<T> : Rule {
 		this.stringifier = (owned)stringifier;
 	}
 
-	internal override Result parse(Parser p, out Value @value) {
+	internal override Result parse(Parser p, out Value @value, uint depth) {
 		@value = Value(type);
 		CustomParser<T> state = constructor();
 		var seen_accepting = false;

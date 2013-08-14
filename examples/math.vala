@@ -84,12 +84,12 @@ void parse(Rules rules, string expression) {
 static void main() {
 	var rules = new Rules();
 	rules.register_int(32, typeof(int32));
-	rules.register<Multiplication>("multiplication", 1, "%P{left}% *% %P{right}");
-	rules.register<Division>("division", 1, "%P{left}% /% %P{right}");
-	rules.register<Addition>("addition", 0, "%P{left}% +% %P{right}");
-	rules.register<Subtraction>("subtraction", 0, "%P{left}% -% %P{right}");
-	rules.register<Parenthetical>("subexpression", 2, "% (% %P{expr}% )");
-	rules.register<Literal>("number", 2, "% %P{val}");
+	rules.register<Multiplication>("multiplication", 1, "%P{+left}% *% %P{right}");
+	rules.register<Division>("division", 2, "%P{+left}% /% %P{+right}");
+	rules.register<Addition>("addition", 0, "%P{+left}% +% %P{right}");
+	rules.register<Subtraction>("subtraction", 0, "%P{+left}% -% %P{+right}");
+	rules.register<Parenthetical>("subexpression", 3, "% (% %P{-expr}% )");
+	rules.register<Literal>("number", 3, "% %P{val}");
 
 	parse(rules, "3+ 5");
 	parse(rules, "3+ 5*10");
