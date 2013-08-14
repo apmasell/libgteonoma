@@ -45,11 +45,11 @@ public struct GTeonoma.source_location {
 	/**
 	 * The current line.
 	 */
-	long line;
+	int line;
 	/**
 	 * The Unicode character offset on the current line.
 	 */
-	long offset;
+	int offset;
 }
 
 /**
@@ -434,11 +434,13 @@ public abstract class GTeonoma.Parser : Object {
 					mark_rewind();
 				}
 			} else {
+				cache_hit(memory.result, memory.rule.name, precedence, depth, start_offset, start_lines);
 				@value = memory.@value;
 				result = memory.result;
 				if (result == Result.OK || result == Result.ABORT) {
 					marks[marks.length - 1] = memory.post_mark;
 					reset(marks[marks.length - 1].index);
+					break;
 				}
 			}
 		}
