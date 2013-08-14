@@ -64,6 +64,7 @@ class Parenthetical : Expression {
 void parse(Rules rules, string expression) {
 	var parser = new StringParser(rules, expression);
 	Value val;
+	log_to_console(parser);
 	stdout.printf("Parsing `%s'.\n", expression);
 	switch (parser.parse(typeof(Expression), out val)) {
 		case Result.OK:

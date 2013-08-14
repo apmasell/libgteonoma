@@ -408,6 +408,12 @@ public abstract class GTeonoma.Parser : Object {
 		return parse_type(type, out @value, 0, 0);
 	}
 
+	public signal void attempting_parse(string rule, uint precedence, uint depth, int offset, int lines);
+	public signal void finished_parse(Result result, string rule, uint precedence, uint depth, int offset, int lines);
+	public signal void cache_hit(Result result, string rule, uint precedence, uint depth, int offset, int lines);
+	public signal void start_property(string rule, string property, uint depth);
+	public signal void end_property(string rule, string property, uint depth);
+
 	internal Result parse_type(Type type, out Value @value, uint precedence, uint depth) {
 		var result = Result.FAIL;
 		var old_error = errors;
@@ -421,6 +427,7 @@ public abstract class GTeonoma.Parser : Object {
 			var memory = memories[marks[marks.length - 1].lines, marks[marks.length - 1].offset, rule];
 			if (memory == null) {
 				mark_set();
+				attempting_parse(rule.name, precedence, depth, start_offset, start_lines);
 				result = rule.parse(this, out @value, depth);
 
 				memory = new Memory();
@@ -429,6 +436,7 @@ public abstract class GTeonoma.Parser : Object {
 				memory.rule = rule;
 				memory.result = result;
 				memories[start_lines, start_offset] = memory;
+				finished_parse(result, rule.name, precedence, depth, start_offset, start_lines);
 				if (result == Result.OK || result == Result.ABORT) {
 					mark_clear();
 					break;

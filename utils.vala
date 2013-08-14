@@ -222,3 +222,27 @@ internal class GTeonoma.IdentifierParser : CustomParser<Identifier> {
 		return new Identifier(str);
 	}
 }
+namespace GTeonoma {
+	public void log_to_console(Parser parser) {
+		parser.attempting_parse.connect((rule, precedence, depth, offset, lines) => {
+				for (var i = 0; i < depth; i++) stdout.putc(' ');
+				stdout.printf("%s[%u]: Attempting parse at %d:%d...\n", rule, precedence, lines, offset);
+				});
+		parser.finished_parse.connect((result, rule, precedence, depth, offset, lines) => {
+				for (var i = 0; i < depth; i++) stdout.putc(' ');
+				stdout.printf("%s[%u]: %s at %d:%d.\n", rule, precedence, result.to_string(), lines, offset);
+				});
+		parser.cache_hit.connect((result, rule, precedence, depth, offset, lines) => {
+				for (var i = 0; i < depth; i++) stdout.putc(' ');
+				stdout.printf("%s[%u]: %s at %d:%d. (cached)\n", rule, precedence, result.to_string(), lines, offset);
+				});
+		parser.start_property.connect((rule, property, depth) => {
+				for (var i = 0; i < depth; i++) stdout.putc(' ');
+				stdout.printf("%s: Parsing property %s...\n", rule, property);
+				});
+		parser.end_property.connect((rule, property, depth) => {
+				for (var i = 0; i < depth; i++) stdout.putc(' ');
+				stdout.printf("%s: Finished property %s.\n", rule, property);
+				});
+	}
+}

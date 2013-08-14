@@ -689,7 +689,9 @@ internal class GTeonoma.ObjectRule : Rule {
 					p.mark_set();
 					var prop = obj_type.find_property(chunks[index].property);
 					assert (prop != null);
+					p.start_property(name, chunks[index].property, depth);
 					var result = p.parse_type(prop.value_type, out prop_value, chunks[index].next[precedence], depth + 1);
+					p.end_property(name, chunks[index].property, depth);
 					if (result == Result.OK) {
 						obj.set_property(chunks[index].property, prop_value);
 						p.mark_clear();
@@ -707,12 +709,14 @@ internal class GTeonoma.ObjectRule : Rule {
 					Value child_value;
 					Result result;
 					p.mark_set();
+					p.start_property(name, chunks[index].property, depth);
 					while ((result = p.parse_type(chunks[index].type, out child_value, chunks[index].next[precedence], depth + 1)) == Result.OK) {
 						list.add(child_value.get_object());
 						p.mark_reset();
 						if (!p.check_string(chunks[index].word))
 								break;
 					}
+					p.end_property(name, chunks[index].property, depth);
 					if (result == Result.ABORT) {
 						p.mark_clear();
 						return result;
