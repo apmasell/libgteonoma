@@ -21,7 +21,8 @@ EXTRA_DIST = \
 
 lib_LTLIBRARIES = libgteonoma.la
 
-pkginclude_HEADERS = gteonoma.h
+verpkgincludedir = $(includedir)/$(LIB_NAME)
+verpkginclude_HEADERS = gteonoma.h
 
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = $(LIB_NAME).pc
