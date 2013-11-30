@@ -491,8 +491,8 @@ public class GTeonoma.Rules : Object {
 	/**
 	 * Add support for C string literals using {@link StringLiteral}.
 	 */
-	public void register_string_literal() {
-		register_custom<StringLiteral>("string", () => { return new StringLiteralParser(); }, (literal) => { return @"\"$(literal.str.escape(""))\"";});
+	public void register_string_literal(bool has_quotes = true) {
+		register_custom<StringLiteral>("string", () => new StringLiteralParser(has_quotes), (literal) => has_quotes ? @"\"$(literal.str.escape(""))\"" : literal.str.escape(""));
 	}
 
 	/**

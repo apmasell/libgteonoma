@@ -24,10 +24,11 @@ internal class GTeonoma.StringLiteralParser : CustomParser<StringLiteral> {
 		HEX2,
 		END,
 		JUNK;
-		internal CustomParser.StateType get_state() {
+		internal CustomParser.StateType get_state(bool has_quotes) {
 			switch (this) {
-				case StringState.INIT:
 				case StringState.CONTENTS:
+					return has_quotes ? StateType.INTERMEDIATE : StateType.ACCEPTING;
+				case StringState.INIT:
 				case StringState.ESCAPE:
 				case StringState.OCTAL2:
 				case StringState.OCTAL3:
@@ -35,7 +36,7 @@ internal class GTeonoma.StringLiteralParser : CustomParser<StringLiteral> {
 				case StringState.HEX2:
 					return StateType.INTERMEDIATE;
 				case StringState.END:
-					return StateType.ACCEPTING;
+					return has_quotes ? StateType.ACCEPTING : StateType.INVALID;
 				default:
 					return StateType.INVALID;
 			}
@@ -43,63 +44,65 @@ internal class GTeonoma.StringLiteralParser : CustomParser<StringLiteral> {
 	}
 
 	private StringState state;
+	private bool has_quotes;
 
-	public StringLiteralParser() {
-		state = StringState.INIT;
+	public StringLiteralParser(bool has_quotes) {
+		state = has_quotes ? StringState.INIT : StringState.CONTENTS;
+		this.has_quotes = has_quotes;
 	}
 
 	public override CustomParser.StateType next_state(unichar input) {
 		switch (state) {
 			case StringState.INIT:
 				if (input == '"') {
-					return (state = StringState.CONTENTS).get_state();
+					return (state = StringState.CONTENTS).get_state(has_quotes);
 				} else {
-					return (state = StringState.JUNK).get_state();
+					return (state = StringState.JUNK).get_state(has_quotes);
 				}
 			case StringState.CONTENTS:
 				if (input == '\\') {
-					return (state = StringState.ESCAPE).get_state();
+					return (state = StringState.ESCAPE).get_state(has_quotes);
 				} else if (input == '"') {
-					return (state = StringState.END).get_state();
+					return (state = StringState.END).get_state(has_quotes);
 				} else {
-					return (state = StringState.CONTENTS).get_state();
+					return (state = StringState.CONTENTS).get_state(has_quotes);
 				}
 			case StringState.ESCAPE:
 				if (input == 'x') {
-					return (state = StringState.HEX1).get_state();
+					return (state = StringState.HEX1).get_state(has_quotes);
 				} else if (input >= '0' && input <= '7') {
-					return (state = StringState.OCTAL2).get_state();
+					return (state = StringState.OCTAL2).get_state(has_quotes);
 				} else if (input == 'a' || input == 'b' || input == 'f' || input == 'n' || input == 'r' || input == 't' || input == 'v' || input == '"' || input == '\'' || input == '\\' || input == '?') {
-					return (state = StringState.CONTENTS).get_state();
+					return (state = StringState.CONTENTS).get_state(has_quotes);
 				} else {
-					return (state = StringState.JUNK).get_state();
+					return (state = StringState.JUNK).get_state(has_quotes);
 				}
 			case StringState.OCTAL2:
 				if (input >= '0' && input <= '7') {
-					return (state = StringState.OCTAL3).get_state();
+					return (state = StringState.OCTAL3).get_state(has_quotes);
 				} else {
-					return (state = StringState.JUNK).get_state();
+					return (state = StringState.JUNK).get_state(has_quotes);
 				}
 			case StringState.OCTAL3:
 				if (input >= '0' && input <= '7') {
-					return (state = StringState.CONTENTS).get_state();
+					return (state = StringState.CONTENTS).get_state(has_quotes);
 				} else {
-					return (state = StringState.JUNK).get_state();
+					return (state = StringState.JUNK).get_state(has_quotes);
 				}
 			case StringState.HEX1:
 				if (input.isxdigit()) {
-					return (state = StringState.HEX2).get_state();
+					return (state = StringState.HEX2).get_state(has_quotes);
 				} else {
-					return (state = StringState.JUNK).get_state();
+					return (state = StringState.JUNK).get_state(has_quotes);
 				}
 			case StringState.HEX2:
 				if (input.isxdigit()) {
-					return (state = StringState.CONTENTS).get_state();
+					return (state = StringState.CONTENTS).get_state(has_quotes);
 				} else {
-					return (state = StringState.JUNK).get_state();
+					return (state = StringState.JUNK).get_state(has_quotes);
 				}
 			default:
-				return (state = StringState.JUNK).get_state();
+				return (state = StringState.JUNK).get_state(has_quotes);
 		}
 	}
 
