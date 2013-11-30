@@ -489,6 +489,13 @@ public class GTeonoma.Rules : Object {
 	}
 
 	/**
+	 * Register the double type.
+	 */
+	public void register_double() throws RegisterError {
+		this[typeof(double)] = new FloatRule();
+	}
+
+	/**
 	 * Add support for C string literals using {@link StringLiteral}.
 	 */
 	public void register_string_literal(bool has_quotes = true) {
@@ -1056,6 +1063,53 @@ internal class GTeonoma.UInt64Rule : IntegerRule {
 		}
 		@value.set_uint64(number);
 		return true;
+	}
+}
+
+/**
+ * Rule to parse a double.
+ */
+internal class GTeonoma.FloatRule : Rule {
+	public FloatRule() {
+	}
+
+	internal override Result parse(Parser p, out Value @value, uint depth) {
+		@value = Value(typeof(double));
+		var accumulator = new StringBuilder();
+		if (p[false] == '-') {
+			accumulator.append_unichar(p[true]);
+		}
+		while(p[false].isdigit()) {
+			accumulator.append_unichar(p[true]);
+		}
+		if (p[false] == '.') {
+			accumulator.append_unichar(p[true]);
+		} else {
+			return Result.FAIL;
+		}
+		while(p[false].isdigit()) {
+			accumulator.append_unichar(p[true]);
+		}
+		var exponent = p[false];
+		if (exponent == 'e' || exponent == 'E') {
+			accumulator.append_unichar(p[true]);
+			if (p[false] == '-') {
+				accumulator.append_unichar(p[true]);
+			}
+			while(p[false].isdigit()) {
+				accumulator.append_unichar(p[true]);
+			}
+		}
+		double result;
+		if (double.try_parse(accumulator.str, out result)) {
+			@value.set_double(result);
+			return Result.OK;
+		} else {
+			return Result.FAIL;
+		}
+	}
+	internal override void print(Printer p, Value @value) requires (@value.type() == typeof(double)) {
+		p.append(@value.get_double().to_string());
 	}
 }
 
