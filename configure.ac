@@ -1,4 +1,4 @@
-AC_INIT([gteonoma], m4_esyscmd([build-aux/git-version-gen .tarball-version]), [andre@masella.name], [gteonoma], [http://github.com/apmasell/gteonoma])
+AC_INIT([gteonoma], [1.0], [andre@masella.name], [gteonoma], [http://github.com/apmasell/gteonoma])
 AC_CONFIG_SRCDIR([Makefile.am])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_HEADERS(config.h)
@@ -37,11 +37,12 @@ AC_SUBST(GEE_CFLAGS)
 AC_SUBST(GEE_LIBS)
 AC_SUBST(GEE_VER)
 
-LIB_NAME="lib${PACKAGE_NAME}-$(cat .tarball-version | cut -f 1-2 -d .)"
+LIB_NAME="lib${PACKAGE_NAME}-1"
 AC_SUBST(LIB_NAME)
 
 AC_CONFIG_FILES([
 	Makefile
 ]) 
 AC_CONFIG_FILES(${LIB_NAME}.pc:lib.pc.in, [], [LIB_NAME=$LIB_NAME])
+AC_CONFIG_FILES(${LIB_NAME}.deps:lib.deps.in, [], [LIB_NAME=$LIB_NAME])
 AC_OUTPUT
