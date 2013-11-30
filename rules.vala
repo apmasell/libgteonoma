@@ -5,8 +5,14 @@
  * Rules convert parts of the parse stream in to a {@link Value}.
  */
 internal abstract class GTeonoma.Rule : Object {
-	internal string name { get; protected set; }
-	internal uint precedence { get; protected set; }
+	internal string name {
+		get;
+		protected set;
+	}
+	internal uint precedence {
+		get;
+		protected set;
+	}
 	/**
 	 * Parse a particular value from the parse stream.
 	 */
@@ -53,14 +59,17 @@ internal enum GTeonoma.NextPrecedence {
 	HIGHER;
 	internal uint get(uint current_precedence) {
 		switch (this) {
-			case NextPrecedence.RESET:
-				return 0;
-			case NextPrecedence.SAME:
-				return current_precedence;
-			case NextPrecedence.HIGHER:
-				return current_precedence + 1;
-			default:
-				assert_not_reached();
+		 case NextPrecedence.RESET:
+			 return 0;
+
+		 case NextPrecedence.SAME:
+			 return current_precedence;
+
+		 case NextPrecedence.HIGHER:
+			 return current_precedence + 1;
+
+		 default:
+			 assert_not_reached ();
 		}
 	}
 }
@@ -125,20 +134,24 @@ internal struct GTeonoma.chunk {
 	 */
 	internal string to_string() {
 		switch (token) {
-			case Token.BOOL:
-				return @"%b{$(property)}{$(word)}";
-			case Token.COMMIT:
-				return "%%!";
-			case Token.LIST:
-				return @"%$(optional ? 'l' : 'L'){$(property)::$(type.name())}{$(word)}";
-			case Token.PROPERTY:
-				return @"%$(optional ? 'p' : 'P'){$(property)}";
-			case Token.SYMBOL:
-				return word;
+		 case Token.BOOL :
+			 return @"%b{$(property)}{$(word)}";
+
+		 case Token.COMMIT :
+			 return "%%!";
+
+		 case Token.LIST :
+			 return @"%$(optional ? 'l' : 'L'){$(property)::$(type.name())}{$(word)}";
+
+		 case Token.PROPERTY :
+			 return @"%$(optional ? 'p' : 'P'){$(property)}";
+
+		 case Token.SYMBOL:
+			 return word;
 		}
-		assert_not_reached();
+		assert_not_reached ();
 	}
-#endif
+	# endif
 }
 
 /**
@@ -184,60 +197,63 @@ internal class GTeonoma.OrderedRule {
  * corresponding types.
  */
 public class GTeonoma.Rules : Object {
-	private Gee.HashMap<Type, Gee.TreeSet<OrderedRule>> rules;
+	private Gee.HashMap<Type, Gee.TreeSet<OrderedRule> > rules;
 
-	public Rules() {
-		rules = new Gee.HashMap<Type, Gee.TreeSet<OrderedRule>>();
+	public Rules () {
+		rules = new Gee.HashMap<Type, Gee.TreeSet<OrderedRule> > ();
 	}
 
 	/**
 	 * Retrieve the correct rule for a particular type
 	 */
 	internal new Gee.List<Rule> get(Type type, uint precedence = 0) {
-		var list = new Gee.ArrayList<Rule>();
-		if (rules.has_key(type)) {
+		var list = new Gee.ArrayList<Rule> ();
+		if (rules.has_key (type)) {
 			foreach (var o_rule in rules[type]) {
 				if (o_rule.rule.precedence >= precedence) {
-					list.add(o_rule.rule);
+					list.add (o_rule.rule);
 				}
 			}
 		}
 		if (list.size == 0) {
-			list.add(new FailRule(type));
+			list.add (new FailRule (type));
 		}
 		return list;
 	}
 
 	NextPrecedence get_next_precedence(char modifier, string prop_name, Type type, Type prop_type, ref bool left_recursion, bool optional) throws RegisterError {
 		switch (modifier) {
-			case '\0':
-				/* We could recurse infinitely, and the grammar hasn't told
-				 * use what to do. Assume we are to raise precedence. */
-				if (left_recursion && type.is_a(prop_type)) {
-					left_recursion &= !optional;
-					return NextPrecedence.HIGHER;
-				} else {
-					/* We are going in to some other rule family. */
-					left_recursion &= !optional;
-					return NextPrecedence.RESET;
-				}
-			case '+':
-				if (type.is_a(prop_type)) {
-					left_recursion &= !optional;
-					return NextPrecedence.HIGHER;
-				} else {
-					throw new RegisterError.LEFT_RECURSION(@"Property $(prop_name) requests higher precedence than current rule, but it is not of the same type.");
-				}
-			case '-':
-				if (left_recursion && type.is_a(prop_type)) {
-					throw new RegisterError.LEFT_RECURSION(@"Property $(prop_name) requests lower precedence than current rule, but this will cause left-deep recursion.");
-				} else if (type.is_a(prop_type)) {
-					return NextPrecedence.RESET;
-				} else {
-					throw new RegisterError.LEFT_RECURSION(@"Property $(prop_name) requests lower precedence than current rule, but it is not of the same type.");
-				}
-			default:
-				throw new RegisterError.BAD_FORMAT(@"Unknown modifier $(modifier) on $(prop_name).");
+		 case '\0':
+			 /* We could recurse infinitely, and the grammar hasn't told
+			  * use what to do. Assume we are to raise precedence. */
+			 if (left_recursion && type.is_a (prop_type)) {
+				 left_recursion &= !optional;
+				 return NextPrecedence.HIGHER;
+			 } else {
+				 /* We are going in to some other rule family. */
+				 left_recursion &= !optional;
+				 return NextPrecedence.RESET;
+			 }
+
+		 case '+':
+			 if (type.is_a (prop_type)) {
+				 left_recursion &= !optional;
+				 return NextPrecedence.HIGHER;
+			 } else {
+				 throw new RegisterError.LEFT_RECURSION (@"Property $(prop_name) requests higher precedence than current rule, but it is not of the same type.");
+			 }
+
+		 case '-':
+			 if (left_recursion && type.is_a (prop_type)) {
+				 throw new RegisterError.LEFT_RECURSION (@"Property $(prop_name) requests lower precedence than current rule, but this will cause left-deep recursion.");
+			 } else if (type.is_a (prop_type)) {
+				 return NextPrecedence.RESET;
+			 } else {
+				 throw new RegisterError.LEFT_RECURSION (@"Property $(prop_name) requests lower precedence than current rule, but it is not of the same type.");
+			 }
+
+		 default:
+			 throw new RegisterError.BAD_FORMAT (@"Unknown modifier $(modifier) on $(prop_name).");
 		}
 	}
 
@@ -302,35 +318,35 @@ public class GTeonoma.Rules : Object {
 	 *
 	 * @param format the format string if the type is an object; null otherwise.
 	 */
-	public void register<T>(string? name = null, uint precedence = 0, string? format = null, Type[]? types = null) throws RegisterError {
-		var type = typeof(T);
+	public void register<T> (string? name = null, uint precedence = 0, string? format = null, Type[]? types = null) throws RegisterError {
+		var type = typeof (T);
 
-		if (type.is_enum()) {
+		if (type.is_enum ()) {
 			if (format != null) {
-				throw new RegisterError.UNNECESSARY_FORMAT(@"Enumeration $(type.name()) does not require a format string.");
+				throw new RegisterError.UNNECESSARY_FORMAT (@"Enumeration $(type.name()) does not require a format string.");
 			}
-			this[type] = new EnumRule(name, type);
+			this[type] = new EnumRule (name, type);
 			return;
 		}
-		if (type.is_flags()) {
+		if (type.is_flags ()) {
 			if (format != null) {
-				throw new RegisterError.UNNECESSARY_FORMAT(@"Flags $(type.name()) does not require a format string.");
+				throw new RegisterError.UNNECESSARY_FORMAT (@"Flags $(type.name()) does not require a format string.");
 			}
-			this[type] = new FlagsRule(name, type);
+			this[type] = new FlagsRule (name, type);
 		}
 
-		if (!type.is_a(typeof(Object))) {
-			throw new RegisterError.BAD_TYPE(@"Type $(type.name()) is not a flag, enum, or subclass of Object.");
+		if (!type.is_a (typeof (Object))) {
+			throw new RegisterError.BAD_TYPE (@"Type $(type.name()) is not a flag, enum, or subclass of Object.");
 		}
 		if (format == null || format.length == 0) {
-			throw new RegisterError.BAD_FORMAT(@"Format string missing for $(type.name()).\n");
+			throw new RegisterError.BAD_FORMAT (@"Format string missing for $(type.name()).\n");
 		}
 
 		var index = 0;
-		var obj_class = (ObjectClass)type.class_ref();
-		assert(obj_class != null);
+		var obj_class = (ObjectClass) type.class_ref ();
+		assert (obj_class != null);
 		chunk[] chunks = {};
-		var buffer = new StringBuilder();
+		var buffer = new StringBuilder ();
 		var state = ObjectParseState.TEXT;
 		char modifier = '\0';
 		string? prop_name = null;
@@ -338,153 +354,169 @@ public class GTeonoma.Rules : Object {
 		var left_recursion = true;
 		var first = false;
 		unichar c;
-		for (int i = 0; format.get_next_char (ref i, out c);) {
+		for (int i = 0; format.get_next_char (ref i, out c); ) {
 			switch (state) {
-				case ObjectParseState.TEXT:
-					switch (c) {
-						case '%':
-							state = ObjectParseState.COMMAND;
-							break;
-						default:
-							left_recursion &= c.isspace();
-							buffer.append_unichar(c);
-							break;
-					}
-					break;
-			case ObjectParseState.COMMAND:
-				if (c == ' ' || c == 'i' || c == 'I' || c == '%' || c == 'n' || c == '_' || c == '-') {
-					buffer.append_c('%');
-					buffer.append_unichar(c);
-					state = ObjectParseState.TEXT;
-					continue;
-				}
-				if (buffer.len > 0) {
-					chunks += chunk.symbol(buffer.str);
-					buffer.truncate();
-				}
-				optional = c.islower();
-				switch (c) {
-					case '!':
-						chunks += chunk.commit();
-						state = ObjectParseState.TEXT;
-						break;
-					case 'b':
-						state = ObjectParseState.START_BOOL;
-						break;
-					case 'l':
-					case 'L':
-						state = ObjectParseState.START_LIST;
-						break;
-					case 'p':
-					case 'P':
-						state = ObjectParseState.START_PROPERTY;
-						break;
-					default:
-						throw new RegisterError.BAD_FORMAT(@"Unrecognized command $(c) in format string for $(type.name()).\n");
-				}
-				break;
-			case ObjectParseState.START_BOOL:
-			case ObjectParseState.START_LIST:
-			case ObjectParseState.START_PROPERTY:
-			case ObjectParseState.START_PARSE_BOOL:
-			case ObjectParseState.START_PARSE_LIST:
-					if(c != '{') {
-						throw new RegisterError.BAD_FORMAT(@"Expected { in format string for $(type.name()).\n");
-					}
-				first = true;
-				modifier = '\0';
-				switch (state) {
-					case ObjectParseState.START_BOOL:
-						state = ObjectParseState.PROPERTY_BOOL;
-						break;
-					case ObjectParseState.START_LIST:
-						state = ObjectParseState.PROPERTY_LIST;
-						break;
-					case ObjectParseState.START_PROPERTY:
-						state = ObjectParseState.PROPERTY_PROPERTY;
-						break;
-					case ObjectParseState.START_PARSE_BOOL:
-						state = ObjectParseState.PARSE_BOOL;
-						break;
-					case ObjectParseState.START_PARSE_LIST:
-						state = ObjectParseState.PARSE_LIST;
-						break;
-				}
-				break;
-			case ObjectParseState.PROPERTY_BOOL:
-			case ObjectParseState.PROPERTY_LIST:
-			case ObjectParseState.PROPERTY_PROPERTY:
-				if (c == '}') {
-					prop_name = buffer.str;
-					var prop = obj_class.find_property(prop_name);
-					if(prop == null) {
-						throw new RegisterError.MISSING_PROPERTY(@"Property $(prop_name) is not found in $(type.name()).\n");
-					}
-					buffer.truncate();
-					switch (state) {
-						case ObjectParseState.PROPERTY_BOOL:
-							state = ObjectParseState.START_PARSE_BOOL;
-							break;
-						case ObjectParseState.PROPERTY_LIST:
-							state = ObjectParseState.START_PARSE_LIST;
-							break;
-						case ObjectParseState.PROPERTY_PROPERTY:
-							chunks += chunk.prop(prop_name, optional, get_next_precedence(modifier, prop_name, type, prop.value_type, ref left_recursion, optional));
-							prop_name = null;
-							state = ObjectParseState.TEXT;
-							break;
-					}
-				} else if (first && (c == '+' || c == '-')) {
-					modifier = (char) c;
-				} else if (Parser.is_identifier(c, first)) {
-					buffer.append_unichar(c);
-					first = false;
-				} else {
-					if(obj_class.find_property(prop_name) == null) {
-						throw new RegisterError.BAD_FORMAT(@"Unexpected $(c) in format string for $(type.name()).\n");
-					}
-				}
-				break;
-			case ObjectParseState.PARSE_BOOL:
-			case ObjectParseState.PARSE_LIST:
-				if (c == '}') {
-					var keyword = buffer.str;
-					buffer.truncate();
-					switch (state) {
-						case ObjectParseState.PARSE_BOOL:
-							if(obj_class.find_property(prop_name) == null) {
-								throw new RegisterError.MISSING_PROPERTY(@"Property $(prop_name) is not found in $(type.name()).\n");
-							}
-							chunks += chunk.bool(prop_name, keyword);
-							break;
-						case ObjectParseState.PARSE_LIST:
-							if(obj_class.find_property(prop_name) == null) {
-								throw new RegisterError.MISSING_PROPERTY(@"Property $(prop_name) is not found in $(type.name()).\n");
-							}
-							if (types == null || index >= types.length) {
-								throw new RegisterError.MISSING_TYPES(@"Missing generic type information for list $(prop_name) in $(type.name()).\n");
-							}
-							chunks += chunk.list(prop_name, keyword, types[index++], optional, get_next_precedence(modifier, prop_name, type, types[index], ref left_recursion, optional));
-							break;
-						}
-						state = ObjectParseState.TEXT;
-				} else {
-					buffer.append_unichar(c);
-				}
-				break;
+			 case ObjectParseState.TEXT :
+				 switch (c) {
+				  case '%' :
+					  state = ObjectParseState.COMMAND;
+					  break;
+
+				  default :
+					  left_recursion &= c.isspace ();
+					  buffer.append_unichar (c);
+					  break;
+				 }
+				 break;
+
+			 case ObjectParseState.COMMAND :
+				 if (c == ' ' || c == 'i' || c == 'I' || c == '%' || c == 'n' || c == '_' || c == '-') {
+					 buffer.append_c ('%');
+					 buffer.append_unichar (c);
+					 state = ObjectParseState.TEXT;
+					 continue;
+				 }
+				 if (buffer.len > 0) {
+					 chunks += chunk.symbol (buffer.str);
+					 buffer.truncate ();
+				 }
+				 optional = c.islower ();
+				 switch (c) {
+				  case '!':
+					  chunks += chunk.commit ();
+					  state = ObjectParseState.TEXT;
+					  break;
+
+				  case 'b':
+					  state = ObjectParseState.START_BOOL;
+					  break;
+
+				  case 'l':
+				  case 'L':
+					  state = ObjectParseState.START_LIST;
+					  break;
+
+				  case 'p':
+				  case 'P':
+					  state = ObjectParseState.START_PROPERTY;
+					  break;
+
+				  default:
+					  throw new RegisterError.BAD_FORMAT (@"Unrecognized command $(c) in format string for $(type.name()).\n");
+				 }
+				 break;
+
+			 case ObjectParseState.START_BOOL:
+			 case ObjectParseState.START_LIST:
+			 case ObjectParseState.START_PROPERTY:
+			 case ObjectParseState.START_PARSE_BOOL:
+			 case ObjectParseState.START_PARSE_LIST:
+				 if (c != '{') {
+					 throw new RegisterError.BAD_FORMAT (@"Expected { in format string for $(type.name()).\n");
+				 }
+				 first = true;
+				 modifier = '\0';
+				 switch (state) {
+				  case ObjectParseState.START_BOOL:
+					  state = ObjectParseState.PROPERTY_BOOL;
+					  break;
+
+				  case ObjectParseState.START_LIST:
+					  state = ObjectParseState.PROPERTY_LIST;
+					  break;
+
+				  case ObjectParseState.START_PROPERTY:
+					  state = ObjectParseState.PROPERTY_PROPERTY;
+					  break;
+
+				  case ObjectParseState.START_PARSE_BOOL:
+					  state = ObjectParseState.PARSE_BOOL;
+					  break;
+
+				  case ObjectParseState.START_PARSE_LIST:
+					  state = ObjectParseState.PARSE_LIST;
+					  break;
+				 }
+				 break;
+
+			 case ObjectParseState.PROPERTY_BOOL:
+			 case ObjectParseState.PROPERTY_LIST:
+			 case ObjectParseState.PROPERTY_PROPERTY:
+				 if (c == '}') {
+					 prop_name = buffer.str;
+					 var prop = obj_class.find_property (prop_name);
+					 if (prop == null) {
+						 throw new RegisterError.MISSING_PROPERTY (@"Property $(prop_name) is not found in $(type.name()).\n");
+					 }
+					 buffer.truncate ();
+					 switch (state) {
+					  case ObjectParseState.PROPERTY_BOOL:
+						  state = ObjectParseState.START_PARSE_BOOL;
+						  break;
+
+					  case ObjectParseState.PROPERTY_LIST:
+						  state = ObjectParseState.START_PARSE_LIST;
+						  break;
+
+					  case ObjectParseState.PROPERTY_PROPERTY:
+						  chunks += chunk.prop (prop_name, optional, get_next_precedence (modifier, prop_name, type, prop.value_type, ref left_recursion, optional));
+						  prop_name = null;
+						  state = ObjectParseState.TEXT;
+						  break;
+					 }
+				 } else if (first && (c == '+' || c == '-')) {
+					 modifier = (char) c;
+				 } else if (Parser.is_identifier (c, first)) {
+					 buffer.append_unichar (c);
+					 first = false;
+				 } else {
+					 if (obj_class.find_property (prop_name) == null) {
+						 throw new RegisterError.BAD_FORMAT (@"Unexpected $(c) in format string for $(type.name()).\n");
+					 }
+				 }
+				 break;
+
+			 case ObjectParseState.PARSE_BOOL:
+			 case ObjectParseState.PARSE_LIST:
+				 if (c == '}') {
+					 var keyword = buffer.str;
+					 buffer.truncate ();
+					 switch (state) {
+					  case ObjectParseState.PARSE_BOOL:
+						  if (obj_class.find_property (prop_name) == null) {
+							  throw new RegisterError.MISSING_PROPERTY (@"Property $(prop_name) is not found in $(type.name()).\n");
+						  }
+						  chunks += chunk.bool(prop_name, keyword);
+						  break;
+
+					  case ObjectParseState.PARSE_LIST:
+						  if (obj_class.find_property (prop_name) == null) {
+							  throw new RegisterError.MISSING_PROPERTY (@"Property $(prop_name) is not found in $(type.name()).\n");
+						  }
+						  if (types == null || index >= types.length) {
+							  throw new RegisterError.MISSING_TYPES (@"Missing generic type information for list $(prop_name) in $(type.name()).\n");
+						  }
+						  chunks += chunk.list (prop_name, keyword, types[index++], optional, get_next_precedence (modifier, prop_name, type, types[index], ref left_recursion, optional));
+						  break;
+					 }
+					 state = ObjectParseState.TEXT;
+				 } else {
+					 buffer.append_unichar (c);
+				 }
+				 break;
 			}
 		}
 		if (state != ObjectParseState.TEXT) {
-			throw new RegisterError.BAD_FORMAT(@"Unexpected end of format string for $(type.name()).\n");
+			throw new RegisterError.BAD_FORMAT (@"Unexpected end of format string for $(type.name()).\n");
 		}
 		if (buffer.len > 0) {
-			chunks += chunk.symbol(buffer.str);
-			buffer.truncate();
+			chunks += chunk.symbol (buffer.str);
+			buffer.truncate ();
 		}
 		if (chunks.length == 0) {
-			throw new RegisterError.BAD_FORMAT(@"Empty format string for $(type.name()).\n");
+			throw new RegisterError.BAD_FORMAT (@"Empty format string for $(type.name()).\n");
 		}
-		var rule = new ObjectRule(name, type, precedence, chunks);
+		var rule = new ObjectRule (name, type, precedence, chunks);
 		this[type] = rule;
 	}
 
@@ -492,14 +524,14 @@ public class GTeonoma.Rules : Object {
 	 * Register the double type.
 	 */
 	public void register_double() throws RegisterError {
-		this[typeof(double)] = new FloatRule();
+		this[typeof (double)] = new FloatRule ();
 	}
 
 	/**
 	 * Add support for C string literals using {@link StringLiteral}.
 	 */
 	public void register_string_literal(bool has_quotes = true) {
-		register_custom<StringLiteral>("string", () => new StringLiteralParser(has_quotes), (literal) => has_quotes ? @"\"$(literal.str.escape(""))\"" : literal.str.escape(""));
+		register_custom<StringLiteral> ("string", () => new StringLiteralParser (has_quotes), (literal) => has_quotes ? @"\"$(literal.str.escape(" "))\"" : literal.str.escape (""));
 	}
 
 	/**
@@ -509,26 +541,29 @@ public class GTeonoma.Rules : Object {
 	 * @param allow_at permits an ''\@'' character to preceed an identifier like Vala and C#.
 	 */
 	public void register_identifier(bool allow_unicode = false, bool allow_at = false) {
-		register_custom<Identifier>("identifier", () => { return new IdentifierParser(allow_unicode, allow_at); }, (identifier) => { return identifier.name;});
+		register_custom<Identifier> ("identifier", () => new IdentifierParser (allow_unicode, allow_at), (identifier) => identifier.name);
 	}
 
 	/**
 	 * Register a new signed integer type.
 	 * @param size in bits (8, 32, or 64)
 	 */
-	public void register_int(int size, Type type) throws RegisterError requires (type.is_fundamental()) {
+	public void register_int(int size, Type type) throws RegisterError requires(type.is_fundamental ()) {
 		switch (size) {
-			case 8:
-				this[type] = new Int8Rule(type);
-				break;
-			case 32:
-				this[type] = new Int32Rule(type);
-				break;
-			case 64:
-				this[type] = new Int64Rule(type);
-				break;
-			default:
-				throw new RegisterError.BAD_TYPE("Unsupported size.");
+		 case 8:
+			 this[type] = new Int8Rule (type);
+			 break;
+
+		 case 32:
+			 this[type] = new Int32Rule (type);
+			 break;
+
+		 case 64:
+			 this[type] = new Int64Rule (type);
+			 break;
+
+		 default:
+			 throw new RegisterError.BAD_TYPE ("Unsupported size.");
 		}
 	}
 
@@ -536,19 +571,22 @@ public class GTeonoma.Rules : Object {
 	 * Register a new unsigned integer type.
 	 * @param size in bits (8, 32, or 64)
 	 */
-	public void register_uint(int size, Type type) throws RegisterError requires (type.is_fundamental()) {
+	public void register_uint(int size, Type type) throws RegisterError requires(type.is_fundamental ()) {
 		switch (size) {
-			case 8:
-				this[type] = new UInt8Rule(type);
-				break;
-			case 32:
-				this[type] = new UInt32Rule(type);
-				break;
-			case 64:
-				this[type] = new UInt64Rule(type);
-				break;
-			default:
-				throw new RegisterError.BAD_TYPE("Unsupported size.");
+		 case 8:
+			 this[type] = new UInt8Rule (type);
+			 break;
+
+		 case 32:
+			 this[type] = new UInt32Rule (type);
+			 break;
+
+		 case 64:
+			 this[type] = new UInt64Rule (type);
+			 break;
+
+		 default:
+			 throw new RegisterError.BAD_TYPE ("Unsupported size.");
 		}
 	}
 
@@ -567,34 +605,34 @@ public class GTeonoma.Rules : Object {
 	 * @param stringifier a delegate that will convert a previously parsed object
 	 * to a string representation
 	 */
-	public void register_custom<T>(string name, owned CustomParser.CustomParserFactory<T> parser_factory, owned CustomParser.StringifyObject<T> stringifier) {
-		this[typeof(T)] = new CustomRule<T>(name, (owned) parser_factory, (owned) stringifier);
+	public void register_custom<T> (string name, owned CustomParser.CustomParserFactory<T> parser_factory, owned CustomParser.StringifyObject<T> stringifier) {
+		this[typeof (T)] = new CustomRule<T> (name, (owned) parser_factory, (owned) stringifier);
 	}
 
 	/**
 	 * Register a rule for a specified type and all of its ancestral types.
 	 */
 	internal new void set(Type type, Rule rule) {
-		var interfaces = type.interfaces();
+		var interfaces = type.interfaces ();
 		if (interfaces != null) {
 			foreach (var interface_type in interfaces) {
-				set_type(interface_type, rule);
+				set_type (interface_type, rule);
 			}
 		}
-		for(; type != Type.INVALID; type = type.parent()) {
-			set_type(type, rule);
+		for (; type != Type.INVALID; type = type.parent ()) {
+			set_type (type, rule);
 		}
 	}
 
 	private void set_type(Type type, Rule rule) {
 		Gee.TreeSet<OrderedRule> list;
-		if (rules.has_key(type)) {
+		if (rules.has_key (type)) {
 			list = rules[type];
 		} else {
-			list = new Gee.TreeSet<OrderedRule>(OrderedRule.compare);
+			list = new Gee.TreeSet<OrderedRule> (OrderedRule.compare);
 			rules[type] = list;
 		}
-		list.add(new OrderedRule(rule, list.size));
+		list.add (new OrderedRule (rule, list.size));
 	}
 }
 
@@ -638,21 +676,21 @@ public errordomain GTeonoma.RegisterError {
  */
 internal class GTeonoma.FailRule : Rule {
 	string error;
-	public FailRule(Type type) {
+	public FailRule (Type type) {
 		name = "failure";
 		error = @"Internal error: No rule for type `$(type.name())'.";
 	}
 
 	internal override Result parse(Parser p, out Value @value, uint depth) {
-		@value = Value(typeof(Object));
-		p.push_error(error);
+		@value = Value (typeof (Object));
+		p.push_error (error);
 		return Result.ABORT;
 	}
 
 	internal override void print(Printer p, Value @value) {
-		p.append("\n");
-		p.append(error);
-		p.append("\n");
+		p.append ("\n");
+		p.append (error);
+		p.append ("\n");
 	}
 }
 
@@ -667,140 +705,153 @@ internal class GTeonoma.ObjectRule : Rule {
 	internal ObjectRule(string name, Type type, uint precedence, chunk[] chunks) {
 		this.name = name;
 		this.type = type;
-		this.obj_type = (ObjectClass)type.class_ref();
+		this.obj_type = (ObjectClass) type.class_ref ();
 		this.chunks = chunks;
 		this.precedence = precedence;
 	}
 
 	internal override Result parse(Parser p, out Value ret_value, uint depth) {
-		ret_value = Value(type);
-		var obj = Object.new(type);
+		ret_value = Value (type);
+		var obj = Object.new (type);
 		if (obj is SourceInfo) {
-			((SourceInfo)obj).source = p.get_location();
+			((SourceInfo) obj).source = p.get_location ();
 		}
 		bool committed = false;
-		for(var index = 0; index < chunks.length; index++) {
+		for (var index = 0; index < chunks.length; index++) {
 			switch (chunks[index].token) {
-				case Token.BOOL:
-					if (p.check_string(chunks[index].word)) {
-						var prop_value = Value(typeof(bool));
-						prop_value.set_boolean(true);
-						obj.set_property(chunks[index].property, prop_value);
-					}
-					break;
-				case Token.COMMIT:
-					committed = true;
-					continue;
-				case Token.PROPERTY:
-					Value prop_value;
-					p.mark_set();
-					var prop = obj_type.find_property(chunks[index].property);
-					assert (prop != null);
-					p.start_property(name, chunks[index].property, depth);
-					var result = p.parse_type(prop.value_type, out prop_value, chunks[index].next[precedence], depth + 1);
-					p.end_property(name, chunks[index].property, depth);
-					if (result == Result.OK) {
-						obj.set_property(chunks[index].property, prop_value);
-						p.mark_clear();
-					} else if (chunks[index].optional && result == Result.FAIL) {
-						/* Ignore. */
-						p.mark_rewind();
-					} else {
-						p.push_error(@"Expected $(p.names_for(prop.value_type)) missing in $(name).");
-						p.mark_clear();
-						return result;
-					}
-					break;
-				case Token.LIST:
-					var list = new Gee.ArrayList<Object>();
-					Value child_value;
-					Result result;
-					p.mark_set();
-					p.start_property(name, chunks[index].property, depth);
-					while ((result = p.parse_type(chunks[index].type, out child_value, chunks[index].next[precedence], depth + 1)) == Result.OK) {
-						list.add(child_value.get_object());
-						p.mark_reset();
-						if (!p.check_string(chunks[index].word))
-								break;
-					}
-					p.end_property(name, chunks[index].property, depth);
-					if (result == Result.ABORT) {
-						p.mark_clear();
-						return result;
-					} else if (!chunks[index].optional && list.size == 0) {
-						p.push_error(@"Expected $(p.names_for(chunks[index].type)) missing in $(name).");
-						p.mark_clear();
-						return committed ? Result.ABORT : Result.FAIL;
-					} else {
-						p.push_error(@"Expected one of $(p.names_for(chunks[index].type)) in $(name).");
-						p.mark_rewind();
-						Value list_value = Value(typeof(Gee.List));
-						list_value.set_object(list);
-						obj.set_property(chunks[index].property, list_value);
-					}
-					break;
-				case Token.SYMBOL:
-					if (!p.check_string(chunks[index].word, name)) {
-						return committed ? Result.ABORT : Result.FAIL;
-					}
-					break;
+			 case Token.BOOL:
+				 if (p.check_string (chunks[index].word)) {
+					 var prop_value = Value (typeof (bool));
+					 prop_value.set_boolean (true);
+					 obj.set_property (chunks[index].property, prop_value);
+				 }
+				 break;
+
+			 case Token.COMMIT:
+				 committed = true;
+				 continue;
+
+			 case Token.PROPERTY:
+				 Value prop_value;
+				 p.mark_set ();
+				 var prop = obj_type.find_property (chunks[index].property);
+				 assert (prop != null);
+				 p.start_property (name, chunks[index].property, depth);
+				 var result = p.parse_type (prop.value_type, out prop_value, chunks[index].next[precedence], depth + 1);
+				 p.end_property (name, chunks[index].property, depth);
+				 if (result == Result.OK) {
+					 obj.set_property (chunks[index].property, prop_value);
+					 p.mark_clear ();
+				 } else if (chunks[index].optional && result == Result.FAIL) {
+					 /* Ignore. */
+					 p.mark_rewind ();
+				 } else {
+					 p.push_error (@"Expected $(p.names_for(prop.value_type)) missing in $(name).");
+					 p.mark_clear ();
+					 return result;
+				 }
+				 break;
+
+			 case Token.LIST:
+				 var list = new Gee.ArrayList<Object> ();
+				 Value child_value;
+				 Result result;
+				 p.mark_set ();
+				 p.start_property (name, chunks[index].property, depth);
+				 while ((result = p.parse_type (chunks[index].type, out child_value, chunks[index].next[precedence], depth + 1)) == Result.OK) {
+					 list.add (child_value.get_object ());
+					 p.mark_reset ();
+					 if (!p.check_string (chunks[index].word)) {
+						 break;
+					 }
+				 }
+				 p.end_property (name, chunks[index].property, depth);
+				 if (result == Result.ABORT) {
+					 p.mark_clear ();
+					 return result;
+				 } else if (!chunks[index].optional && list.size == 0) {
+					 p.push_error (@"Expected $(p.names_for(chunks[index].type)) missing in $(name).");
+					 p.mark_clear ();
+					 return committed ? Result.ABORT : Result.FAIL;
+				 } else {
+					 p.push_error (@"Expected one of $(p.names_for(chunks[index].type)) in $(name).");
+					 p.mark_rewind ();
+					 Value list_value = Value (typeof (Gee.List));
+					 list_value.set_object (list);
+					 obj.set_property (chunks[index].property, list_value);
+				 }
+				 break;
+
+			 case Token.MAP:
+				 assert_not_reached ();         //TODO
+
+			 case Token.SYMBOL:
+				 if (!p.check_string (chunks[index].word, name)) {
+					 return committed ? Result.ABORT : Result.FAIL;
+				 }
+				 break;
 			}
 		}
-		ret_value.set_object(obj);
+		ret_value.set_object (obj);
 		return Result.OK;
 	}
 	Value get_prop(string prop_name, Object obj) {
-		Value @value = Value(obj_type.find_property(prop_name).value_type);
-		obj.get_property(prop_name, ref @value);
+		Value @value = Value (obj_type.find_property (prop_name).value_type);
+		obj.get_property (prop_name, ref @value);
 		return @value;
 	}
 
-	internal override void print(Printer p, Value @value) requires (@value.type().is_object()) {
-		Object obj = @value.get_object();
-		assert(obj.get_type().is_a(type));
+	internal override void print(Printer p, Value @value) requires (@value.type ().is_object ()) {
+		Object obj = @value.get_object ();
+		assert (obj.get_type ().is_a (type));
 		for (var index = 0; index < chunks.length; index++) {
 			switch (chunks[index].token) {
-				case Token.BOOL:
-					if (get_prop(chunks[index].property, obj).get_boolean()) {
-						p.append(chunks[index].word);
-					}
-					break;
-				case Token.COMMIT:
-					break;
-				case Token.PROPERTY:
-					var prop_value = get_prop(chunks[index].property, obj);
-					if (chunks[index].optional && prop_value.type().is_object() && prop_value.get_object() == null)
-						continue;
-					if (prop_value.type().is_object()) {
-						/*
-						 * Make our type more specific in the case of alternate rules. Otherwise, we might pick the wrong branch.
-						 */
-						var prop_obj = prop_value.get_object();
-						prop_value = Value(prop_obj.get_type());
-						prop_value.set_object(prop_obj);
-					}
-					p.print(prop_value);
-					break;
-				case Token.LIST:
-					var list = get_prop(chunks[index].property, obj).get_object() as Gee.List<Object>;
-					if (list == null) {
-						continue;
-					}
-					var first = true;
-					foreach(var child in list) {
-						if (first) {
-							first = false;
-						} else {
-							p.append(chunks[index].word);
-						}
-						var child_value = Value(child.get_type());
-						child_value.set_object(child);
-						p.print(child_value);
-					}
-					break;
-				case Token.SYMBOL:
-					p.append(chunks[index].word);
-					break;
+			 case Token.BOOL:
+				 if (get_prop (chunks[index].property, obj).get_boolean ()) {
+					 p.append (chunks[index].word);
+				 }
+				 break;
+
+			 case Token.COMMIT:
+				 break;
+
+			 case Token.PROPERTY:
+				 var prop_value = get_prop (chunks[index].property, obj);
+				 if (chunks[index].optional && prop_value.type ().is_object () && prop_value.get_object () == null) {
+					 continue;
+				 }
+				 if (prop_value.type ().is_object ()) {
+					 /*
+					  * Make our type more specific in the case of alternate rules. Otherwise, we might pick the wrong branch.
+					  */
+					 var prop_obj = prop_value.get_object ();
+					 prop_value = Value (prop_obj.get_type ());
+					 prop_value.set_object (prop_obj);
+				 }
+				 p.print (prop_value);
+				 break;
+
+			 case Token.LIST:
+				 var list = get_prop (chunks[index].property, obj).get_object () as Gee.List<Object>;
+				 if (list == null) {
+					 continue;
+				 }
+				 var first = true;
+				 foreach (var child in list) {
+					 if (first) {
+						 first = false;
+					 } else {
+						 p.append (chunks[index].word);
+					 }
+					 var child_value = Value (child.get_type ());
+					 child_value.set_object (child);
+					 p.print (child_value);
+				 }
+				 break;
+
+			 case Token.SYMBOL:
+				 p.append (chunks[index].word);
+				 break;
 			}
 		}
 	}
@@ -812,29 +863,29 @@ internal class GTeonoma.ObjectRule : Rule {
 internal class GTeonoma.EnumRule : Rule {
 	EnumClass enum_class;
 	Type type;
-	public EnumRule(string? name, Type type) {
-		this.name = name ?? type.name();
+	public EnumRule (string? name, Type type) {
+		this.name = name?? type.name ();
 		this.type = type;
-		this.enum_class = (EnumClass)type.class_ref();
+		this.enum_class = (EnumClass) type.class_ref ();
 	}
 
 	internal override Result parse(Parser p, out Value @value, uint depth) {
-		@value = Value(type);
-		var word = p.get_word();
-		var enum_value = enum_class.get_value_by_nick(word);
+		@value = Value (type);
+		var word = p.get_word ();
+		var enum_value = enum_class.get_value_by_nick (word);
 		if (enum_value == null) {
-			p.push_error(@"Unexpected symbol `$word'.");
+			p.push_error (@"Unexpected symbol `$word'.");
 			return Result.FAIL;
 		} else {
-			@value.set_enum(enum_value.value);
+			@value.set_enum (enum_value.value);
 			return Result.OK;
 		}
 	}
 
-	internal override void print(Printer p, Value @value) requires (@value.type() == type) {
-		var enum_value = enum_class.get_value(@value.get_enum());
+	internal override void print(Printer p, Value @value) requires (@value.type () == type) {
+		var enum_value = enum_class.get_value (@value.get_enum ());
 		assert (enum_value != null);
-		p.append(enum_value.value_nick);
+		p.append (enum_value.value_nick);
 	}
 }
 
@@ -844,43 +895,43 @@ internal class GTeonoma.EnumRule : Rule {
 internal class GTeonoma.FlagsRule : Rule {
 	private Type type;
 	private FlagsClass flags_class;
-	public FlagsRule(string? name, Type type) {
-		this.name = name ?? type.name();
+	public FlagsRule (string? name, Type type) {
+		this.name = name?? type.name ();
 		this.type = type;
-		this.flags_class = (FlagsClass)type.class_ref();
+		this.flags_class = (FlagsClass) type.class_ref ();
 	}
 
 	internal override Result parse(Parser p, out Value @value, uint depth) {
-		@value = Value(type);
-		while(true) {
-			p.mark_set();
-			p.consume_whitespace();
-			var word = p.get_word();
+		@value = Value (type);
+		while (true) {
+			p.mark_set ();
+			p.consume_whitespace ();
+			var word = p.get_word ();
 			if (word.length == 0) {
-				p.mark_rewind();
+				p.mark_rewind ();
 				break;
 			}
-			unowned FlagsValue? flag = flags_class.get_value_by_nick(word);
+			unowned FlagsValue? flag = flags_class.get_value_by_nick (word);
 			if (flag == null) {
-				p.mark_rewind();
+				p.mark_rewind ();
 				break;
 			}
-			@value.set_flags(@value.get_flags() & flag.value);
-			p.mark_clear();
+			@value.set_flags (@value.get_flags () & flag.value);
+			p.mark_clear ();
 		}
 		return Result.OK;
 	}
 
-	internal override void print(Printer p, Value @value) requires(@value.type() == type) {
+	internal override void print(Printer p, Value @value) requires (@value.type () == type) {
 		var first = true;
 		foreach (unowned FlagsValue flag in flags_class.values) {
-			if ((flag.value & @value.get_flags()) == flag.value) {
+			if ((flag.value & @value.get_flags ()) == flag.value) {
 				if (first) {
 					first = false;
 				} else {
-					p.append("%_");
+					p.append ("%_");
 				}
-				p.append(flag.value_nick);
+				p.append (flag.value_nick);
 			}
 		}
 	}
@@ -893,175 +944,179 @@ internal class GTeonoma.FlagsRule : Rule {
  */
 internal abstract class GTeonoma.IntegerRule : Rule {
 	Type type;
-	public IntegerRule(Type type) requires (type.is_fundamental()) {
+	public IntegerRule (Type type) requires (type.is_fundamental ()) {
 		this.name = "integer constant";
 		this.type = type;
 	}
 
 	internal override Result parse(Parser p, out Value @value, uint depth) {
-		@value = Value(type);
+		@value = Value (type);
 		unichar c;
 		uint64 accumulator = 0;
 		var negate = false;
 		switch ((c = p[true])) {
-			case '0':
-				switch(p[false]) {
-					case 'x':
-					case 'X':
-						p.get(true);
-						while((c = p[false]).isxdigit()) {
-							accumulator = accumulator * 16 + p[true].xdigit_value();
-						}
-						break;
-					case '0':
-					case '1':
-					case '2':
-					case '3':
-					case '4':
-					case '5':
-					case '6':
-					case '7':
-						accumulator = p[true].digit_value();
-						while((c = p[false]).isdigit()) {
-							if (c >= '8') {
-								p.push_error("Non-octal digit in octal number.");
-								return Result.ABORT;
-							}
-							accumulator = accumulator * 8 + p[true].digit_value();
-						}
-						break;
-					}
-					break;
-				case '-':
-				case '1':
-				case '2':
-				case '3':
-				case '4':
-				case '5':
-				case '6':
-				case '7':
-				case '8':
-				case '9':
-					if (c == '-') {
-						negate = true;
-					} else {
-						accumulator = c.digit_value();
-					}
-					while(p[false].isdigit()) {
-						accumulator = accumulator * 10 + p[true].digit_value();
-					}
-					break;
-			default:
-				return Result.FAIL;
+		 case '0' :
+			 switch (p[false]) {
+			  case 'x' :
+			  case 'X' :
+				  p.get (true);
+				  while ((c = p[false]).isxdigit ()) {
+					  accumulator = accumulator * 16 + p[true].xdigit_value ();
+				  }
+				  break;
+
+			  case '0' :
+			  case '1' :
+			  case '2' :
+			  case '3' :
+			  case '4':
+			  case '5':
+			  case '6':
+			  case '7':
+				  accumulator = p[true].digit_value ();
+				  while ((c = p[false]).isdigit ()) {
+					  if (c >= '8') {
+						  p.push_error ("Non-octal digit in octal number.");
+						  return Result.ABORT;
+					  }
+					  accumulator = accumulator * 8 + p[true].digit_value ();
+				  }
+				  break;
+			 }
+			 break;
+
+		 case '-':
+		 case '1':
+		 case '2':
+		 case '3':
+		 case '4':
+		 case '5':
+		 case '6':
+		 case '7':
+		 case '8':
+		 case '9':
+			 if (c == '-') {
+				 negate = true;
+			 } else {
+				 accumulator = c.digit_value ();
+			 }
+			 while (p[false].isdigit ()) {
+				 accumulator = accumulator * 10 + p[true].digit_value ();
+			 }
+			 break;
+
+		 default:
+			 return Result.FAIL;
 		}
 
 		var long_var = false;
 		var unsigned_var = false;
 		switch (p[false]) {
-			case 'l':
-			case 'L':
-				long_var = true;
-				p.get(true);
-				break;
-			case 'u':
-			case 'U':
-				unsigned_var = true;
-				p.get(true);
-				break;
+		 case 'l':
+		 case 'L':
+			 long_var = true;
+			 p.get (true);
+			 break;
+
+		 case 'u':
+		 case 'U':
+			 unsigned_var = true;
+			 p.get (true);
+			 break;
 		}
 		//TODO longs and unsigned don't make sense, do they?
-		return set_value(accumulator, negate, ref @value) ?  Result.OK : Result.FAIL;
+		return set_value (accumulator, negate, ref @value) ?  Result.OK : Result.FAIL;
 	}
 	protected abstract bool set_value(uint64 number, bool negate, ref Value @value);
 }
 
 internal class GTeonoma.Int8Rule : IntegerRule {
-	public Int8Rule(Type type) {
-		base(type);
+	public Int8Rule (Type type) {
+		base (type);
 	}
 	internal override void print(Printer p, Value @value) {
-		p.append(@value.get_char().to_string());
+		p.append (@value.get_char ().to_string ());
 	}
 	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
 		if (number > int8.MAX) {
 			return false;
 		}
-		@value.set_char(negate ? - ((char) number) : (char) number);
+		@value.set_char (negate ? -((char) number) : (char) number);
 		return true;
 	}
 }
 internal class GTeonoma.Int32Rule : IntegerRule {
-	public Int32Rule(Type type) {
-		base(type);
+	public Int32Rule (Type type) {
+		base (type);
 	}
 	internal override void print(Printer p, Value @value) {
-		p.append(@value.get_int().to_string());
+		p.append (@value.get_int ().to_string ());
 	}
 	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
 		if (number > int32.MAX) {
 			return false;
 		}
-		@value.set_int(negate ? - ((int32) number) : (int32) number);
+		@value.set_int (negate ? -((int32) number) : (int32) number);
 		return true;
 	}
 }
 internal class GTeonoma.Int64Rule : IntegerRule {
-	public Int64Rule(Type type) {
-		base(type);
+	public Int64Rule (Type type) {
+		base (type);
 	}
 	internal override void print(Printer p, Value @value) {
-		p.append(@value.get_int64().to_string());
+		p.append (@value.get_int64 ().to_string ());
 	}
 	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
 		if (number > int64.MAX) {
 			return false;
 		}
-		@value.set_int64(negate ? - ((int64) number) : (int64) number);
+		@value.set_int64 (negate ? -((int64) number) : (int64) number);
 		return true;
 	}
 }
 internal class GTeonoma.UInt8Rule : IntegerRule {
-	public UInt8Rule(Type type) {
-		base(type);
+	public UInt8Rule (Type type) {
+		base (type);
 	}
 	internal override void print(Printer p, Value @value) {
-		p.append(@value.get_uchar().to_string());
+		p.append (@value.get_uchar ().to_string ());
 	}
 	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
 		if (number > uint8.MAX || negate) {
 			return false;
 		}
-		@value.set_uchar((uint8)number);
+		@value.set_uchar ((uint8) number);
 		return true;
 	}
 }
 internal class GTeonoma.UInt32Rule : IntegerRule {
-	public UInt32Rule(Type type) {
-		base(type);
+	public UInt32Rule (Type type) {
+		base (type);
 	}
 	internal override void print(Printer p, Value @value) {
-		p.append(@value.get_uint().to_string());
+		p.append (@value.get_uint ().to_string ());
 	}
 	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
 		if (number > uint32.MAX || negate) {
 			return false;
 		}
-		@value.set_uint((uint32)number);
+		@value.set_uint ((uint32) number);
 		return true;
 	}
 }
 internal class GTeonoma.UInt64Rule : IntegerRule {
-	public UInt64Rule(Type type) {
-		base(type);
+	public UInt64Rule (Type type) {
+		base (type);
 	}
 	internal override void print(Printer p, Value @value) {
-		p.append(@value.get_uint64().to_string());
+		p.append (@value.get_uint64 ().to_string ());
 	}
 	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
 		if (negate) {
 			return false;
 		}
-		@value.set_uint64(number);
+		@value.set_uint64 (number);
 		return true;
 	}
 }
@@ -1070,46 +1125,45 @@ internal class GTeonoma.UInt64Rule : IntegerRule {
  * Rule to parse a double.
  */
 internal class GTeonoma.FloatRule : Rule {
-	public FloatRule() {
-	}
+	public FloatRule () {}
 
 	internal override Result parse(Parser p, out Value @value, uint depth) {
-		@value = Value(typeof(double));
-		var accumulator = new StringBuilder();
+		@value = Value (typeof (double));
+		var accumulator = new StringBuilder ();
 		if (p[false] == '-') {
-			accumulator.append_unichar(p[true]);
+			accumulator.append_unichar (p[true]);
 		}
-		while(p[false].isdigit()) {
-			accumulator.append_unichar(p[true]);
+		while (p[false].isdigit ()) {
+			accumulator.append_unichar (p[true]);
 		}
 		if (p[false] == '.') {
-			accumulator.append_unichar(p[true]);
+			accumulator.append_unichar (p[true]);
 		} else {
 			return Result.FAIL;
 		}
-		while(p[false].isdigit()) {
-			accumulator.append_unichar(p[true]);
+		while (p[false].isdigit ()) {
+			accumulator.append_unichar (p[true]);
 		}
 		var exponent = p[false];
 		if (exponent == 'e' || exponent == 'E') {
-			accumulator.append_unichar(p[true]);
+			accumulator.append_unichar (p[true]);
 			if (p[false] == '-') {
-				accumulator.append_unichar(p[true]);
+				accumulator.append_unichar (p[true]);
 			}
-			while(p[false].isdigit()) {
-				accumulator.append_unichar(p[true]);
+			while (p[false].isdigit ()) {
+				accumulator.append_unichar (p[true]);
 			}
 		}
 		double result;
-		if (double.try_parse(accumulator.str, out result)) {
-			@value.set_double(result);
+		if (double.try_parse (accumulator.str, out result)) {
+			@value.set_double (result);
 			return Result.OK;
 		} else {
 			return Result.FAIL;
 		}
 	}
-	internal override void print(Printer p, Value @value) requires (@value.type() == typeof(double)) {
-		p.append(@value.get_double().to_string());
+	internal override void print(Printer p, Value @value) requires (@value.type () == typeof (double)) {
+		p.append (@value.get_double ().to_string ());
 	}
 }
 
@@ -1119,72 +1173,74 @@ internal class GTeonoma.CustomRule<T> : Rule {
 	private CustomParser.StringifyObject<T> stringifier;
 
 	internal CustomRule(string? name, owned CustomParser.CustomParserFactory<T> constructor, owned CustomParser.StringifyObject<T> stringifier) {
-		type = typeof(T);
-		assert(type.is_a(typeof(Object)));
-		this.name = name ?? type.name();
-		this.constructor = (owned)constructor;
-		this.stringifier = (owned)stringifier;
+		type = typeof (T);
+		assert (type.is_a (typeof (Object)));
+		this.name = name?? type.name ();
+		this.constructor = (owned) constructor;
+		this.stringifier = (owned) stringifier;
 	}
 
 	internal override Result parse(Parser p, out Value @value, uint depth) {
-		@value = Value(type);
-		CustomParser<T> state = constructor();
+		@value = Value (type);
+		CustomParser<T> state = constructor ();
 		var seen_accepting = false;
 		long last_buffer_len = 0;
-		var buffer = new StringBuilder();
+		var buffer = new StringBuilder ();
 
-		var source_location = p.get_location();
-		p.mark_set();
+		var source_location = p.get_location ();
+		p.mark_set ();
 
 		var finished = false;
 		while (!finished) {
 			var c = p[true];
 			if (c == '\0') {
-				p.push_error(@"Unexpected end of input in $name.");
-				p.mark_rewind();
+				p.push_error (@"Unexpected end of input in $name.");
+				p.mark_rewind ();
 				finished = true;
 				break;
 			}
-			buffer.append_unichar(c);
-			var statetype = state.next_state(c);
+			buffer.append_unichar (c);
+			var statetype = state.next_state (c);
 			switch (statetype) {
-				case CustomParser.StateType.ACCEPTING:
-				case CustomParser.StateType.FINAL:
-					seen_accepting = true;
-					last_buffer_len = buffer.len;
-					if (statetype == CustomParser.StateType.FINAL) {
-						finished = true;
-						p.mark_clear();
-					} else {
-						p.mark_reset();
-					}
-					break;
-				case CustomParser.StateType.INTERMEDIATE:
-					break;
-				case CustomParser.StateType.INVALID:
-					p.push_error(@"Unexpected $(c.to_string()) in $name.");
-					p.mark_rewind();
-					finished = true;
-					break;
+			 case CustomParser.StateType.ACCEPTING :
+			 case CustomParser.StateType.FINAL :
+				 seen_accepting = true;
+				 last_buffer_len = buffer.len;
+				 if (statetype == CustomParser.StateType.FINAL) {
+					 finished = true;
+					 p.mark_clear ();
+				 } else {
+					 p.mark_reset ();
+				 }
+				 break;
+
+			 case CustomParser.StateType.INTERMEDIATE :
+				 break;
+
+			 case CustomParser.StateType.INVALID:
+				 p.push_error (@"Unexpected $(c.to_string()) in $name.");
+				 p.mark_rewind ();
+				 finished = true;
+				 break;
 			}
 		}
 		if (seen_accepting) {
-			buffer.truncate(last_buffer_len);
-			var obj = (Object)state.build_object(buffer.str);
+			buffer.truncate (last_buffer_len);
+			var obj = (Object) state.build_object (buffer.str);
 			if (obj is SourceInfo) {
-				((SourceInfo)obj).source = source_location;
+				((SourceInfo) obj).source = source_location;
 			}
-			@value.set_object(obj);
+			@value.set_object (obj);
 			return Result.OK;
 		} else {
 			return Result.FAIL;
 		}
 	}
 
-	internal override void print(Printer p, Value @value) requires (@value.type() == type) {
-		Object obj = @value.get_object();
-		assert(obj.get_type().is_a(type));
-		p.append(stringifier((T)obj));
+	internal override void print(Printer p, Value @value) requires (@value.type () == type) {
+		Object obj = @value.get_object ();
+		assert (obj.get_type ().is_a (type));
+		p.append (stringifier ((T) obj));
 	}
 }
 
@@ -1262,10 +1318,10 @@ public abstract class GTeonoma.CustomParser<T> : Object {
 	/**
 	 * Pretty print a custom-parsed object.
 	 */
-	public delegate string StringifyObject<T>(T obj);
+	public delegate string StringifyObject<T> (T obj);
 
 	/**
 	 * Create a new custom parser to parse an object.
 	 */
-	public delegate CustomParser<T> CustomParserFactory<T>();
+	public delegate CustomParser<T> CustomParserFactory<T> ();
 }

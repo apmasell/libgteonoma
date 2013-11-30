@@ -10,7 +10,10 @@ public interface GTeonoma.SourceInfo {
 	/**
 	 * The location in the source file where this object was parsed.
 	 */
-	public abstract source_location source { get; set; }
+	public abstract source_location source {
+		get;
+		set;
+	}
 }
 
 /**
@@ -58,7 +61,7 @@ public struct GTeonoma.source_location {
  * Marks allow rewinding the parse stream during back-tracking.
  */
 internal struct GTeonoma.mark {
-	public mark(long index = 0, int lines = 1, int offset = 0, unichar last = Parser.NO_CHAR, string[]? errors = null) {
+	public mark (long index = 0, int lines = 1, int offset = 0, unichar last = Parser.NO_CHAR, string[]? errors = null) {
 		this.index = index;
 		this.lines = lines;
 		this.offset = offset;
@@ -92,25 +95,25 @@ internal class GTeonoma.ErrorRoot : Object {
 	internal ErrorRoot? parent;
 	private ErrorRoot? sibling;
 	private source_location source;
-	public ErrorRoot(source_location source) {
-		errors = new Gee.ArrayList<string>();
+	public ErrorRoot (source_location source) {
+		errors = new Gee.ArrayList<string> ();
 		parent = null;
 		sibling = null;
 		this.source = source;
 	}
-	public ErrorRoot.with_parent(source_location source, ErrorRoot parent) {
+	public ErrorRoot.with_parent (source_location source, ErrorRoot parent) {
 		this(source);
 		this.parent = parent;
 	}
 
-	public ErrorRoot.with_sibling(source_location source, ErrorRoot sibling) {
+	public ErrorRoot.with_sibling (source_location source, ErrorRoot sibling) {
 		this(source);
 		this.sibling = sibling;
 		this.parent = sibling.parent;
 	}
 
 	internal void add(string error) {
-		errors.add(error);
+		errors.add (error);
 	}
 
 	internal void clear_sibling() {
@@ -119,8 +122,8 @@ internal class GTeonoma.ErrorRoot : Object {
 
 	internal void visit(Parser.ErrorHandler visitor) {
 		for (var er = this; er != null; er = er.sibling) {
-			foreach(var str in er.errors) {
-				visitor(source, str);
+			foreach (var str in er.errors) {
+				visitor (source, str);
 			}
 		}
 	}
@@ -139,7 +142,10 @@ public abstract class GTeonoma.Parser : Object {
 	/**
 	 * Some kind of label for the source of this data.
 	 */
-	public string source { get; protected set; }
+	public string source {
+		get;
+		protected set;
+	}
 
 	/**
 	 * The parsing rules for the types known by this parser.
@@ -166,11 +172,11 @@ public abstract class GTeonoma.Parser : Object {
 	 */
 	private ErrorRoot errors;
 
-	protected Parser(Rules rules) {
-		marks = { mark() };
+	protected Parser (Rules rules) {
+		marks = { mark () };
 		this.rules = rules;
-		memories = new MemoryBank();
-		errors = new ErrorRoot(get_location());
+		memories = new MemoryBank ();
+		errors = new ErrorRoot (get_location ());
 	}
 
 	/**
@@ -179,52 +185,57 @@ public abstract class GTeonoma.Parser : Object {
 	 * If parsing fails, the input stream will be rewound to the position before.
 	 */
 	internal bool check_string(string s, string? display_error = null) {
-		mark_set();
+		mark_set ();
 		var space = marks[marks.length - 1].last_space ? 1 : 0;
 		unichar c;
-		for (int i = 0; s.get_next_char (ref i, out c);) {
-			if (c.isspace()) {
-				space += consume_whitespace();
+		for (int i = 0; s.get_next_char (ref i, out c); ) {
+			if (c.isspace ()) {
+				space += consume_whitespace ();
 				if (space == 0) {
-					if (display_error != null)
-						push_error(@"Expected whitespace in $(display_error).");
-					mark_rewind();
+					if (display_error != null) {
+						push_error (@"Expected whitespace in $(display_error).");
+					}
+					mark_rewind ();
 					return false;
 				}
 				continue;
 			} else if (c == '%') {
-				assert(s.get_next_char(ref i, out c));
+				assert (s.get_next_char (ref i, out c));
 				switch (c) {
-					case '%':
-						/* Handle like regular character. */
-						break;
-					case 'n':
-					case ' ':
-					case '_':
-					case '-':
-						space += consume_whitespace();
-						if (c == '_' && space == 0) {
-							if (display_error != null)
-								push_error(@"Expected whitespace in $(display_error).");
-							mark_rewind();
-							return false;
-						}
-						continue;
-					default:
-						continue;
+				 case '%' :
+					 /* Handle like regular character. */
+					 break;
+
+				 case 'n' :
+				 case ' ' :
+				 case '_' :
+				 case '-':
+					 space += consume_whitespace ();
+					 if (c == '_' && space == 0) {
+						 if (display_error != null) {
+							 push_error (@"Expected whitespace in $(display_error).");
+						 }
+						 mark_rewind ();
+						 return false;
+					 }
+					 continue;
+
+				 default:
+					 continue;
 				}
 			}
-			unichar n = get(true);
+			unichar n = get (true);
 			if (n != c) {
-				if (display_error != null)
-					push_error(@"Expected `$(c.to_string())' but got `$(n.to_string())' in $(display_error).");
-				mark_rewind();
+				if (display_error != null) {
+					push_error (@"Expected `$(c.to_string())' but got `$(n.to_string())' in $(display_error).");
+				}
+				mark_rewind ();
 				return false;
 			} else {
 				space = 0;
 			}
 		}
-		mark_clear();
+		mark_clear ();
 		return true;
 	}
 
@@ -234,8 +245,8 @@ public abstract class GTeonoma.Parser : Object {
 	internal int consume_whitespace() {
 		unichar c;
 		var count = 0;
-		while((c = get(false)) != '\0' && c.isspace()) {
-			get(true);
+		while ((c = get (false)) != '\0' && c.isspace ()) {
+			get (true);
 			count++;
 		}
 		return count;
@@ -250,7 +261,7 @@ public abstract class GTeonoma.Parser : Object {
 	 */
 	internal new unichar get(bool consume = true) {
 		if (marks[marks.length - 1].last == NO_CHAR) {
-			unichar c = get_c(ref marks[marks.length - 1].index);
+			unichar c = get_c (ref marks[marks.length - 1].index);
 			if (c == '\n' || c == '\r') {
 				marks[marks.length - 1].lines++;
 				marks[marks.length - 1].offset = 0;
@@ -258,7 +269,7 @@ public abstract class GTeonoma.Parser : Object {
 				marks[marks.length - 1].offset++;
 			}
 			marks[marks.length - 1].last_space = marks[marks.length - 1].this_space;
-			marks[marks.length - 1].this_space = c.isspace();
+			marks[marks.length - 1].this_space = c.isspace ();
 			marks[marks.length - 1].last = consume ? NO_CHAR : c;
 			return c;
 		} else if (consume) {
@@ -286,17 +297,19 @@ public abstract class GTeonoma.Parser : Object {
 	 * Describe the current location of the input stream.
 	 */
 	public source_location get_location() {
-		return source_location() { source = this.source, line = marks[marks.length - 1].lines, offset = marks[marks.length - 1].offset };
+		return source_location () {
+			       source = this.source, line = marks[marks.length - 1].lines, offset = marks[marks.length - 1].offset
+		};
 	}
 
 	/**
 	 * Pull one C-style identifier from the input stream.
 	 */
 	internal string get_word() {
-		var buffer = new StringBuilder();
+		var buffer = new StringBuilder ();
 		var first = true;
-		while(is_identifier(get(false), first)) {
-			buffer.append_unichar(get(true));
+		while (is_identifier (get (false), first)) {
+			buffer.append_unichar (get (true));
 			first = false;
 		}
 		return buffer.str;
@@ -306,8 +319,8 @@ public abstract class GTeonoma.Parser : Object {
 	 * Checks if there is more data in the input stream.
 	 */
 	public bool is_finished() {
-		consume_whitespace();
-		return get(false) == '\0';
+		consume_whitespace ();
+		return get (false) == '\0';
 	}
 
 	/**
@@ -315,32 +328,32 @@ public abstract class GTeonoma.Parser : Object {
 	 * @param first is this the first character in the identifier?
 	 */
 	public static bool is_identifier(unichar c, bool first) {
-		return c.isalpha() || c == '_' || (!first && c.isdigit());
+		return c.isalpha () || c == '_' || (!first && c.isdigit ());
 	}
 
 	/**
 	 * Make a comma-separated list of names for a type.
 	 */
 	internal string names_for(Type type) {
-		var buffer = new StringBuilder();
+		var buffer = new StringBuilder ();
 		var first = true;
-		foreach(var rule in rules[type]) {
-			if (rule is FailRule)
+		foreach (var rule in rules[type]) {
+			if (rule is FailRule) {
 				continue;
+			}
 			if (first) {
 				first = false;
 			} else {
-				buffer.append(", ");
+				buffer.append (", ");
 			}
-			buffer.append(rule.name);
+			buffer.append (rule.name);
 		}
 		if (first) {
-			return type.name();
+			return type.name ();
 		} else {
 			return buffer.str;
 		}
 	}
-
 
 	/**
 	 * Discard the last mark set.
@@ -381,7 +394,7 @@ public abstract class GTeonoma.Parser : Object {
 	internal void mark_rewind() {
 		assert (marks.length > 1);
 		marks.length--;
-		reset(marks[marks.length - 1].index);
+		reset (marks[marks.length - 1].index);
 	}
 
 	/**
@@ -391,9 +404,11 @@ public abstract class GTeonoma.Parser : Object {
 	 */
 	internal source_location get_marked_location() {
 		if (marks.length > 1) {
-			return source_location() { source = this.source, line = marks[marks.length - 2].lines, offset = marks[marks.length - 2].offset };
+			return source_location () {
+				       source = this.source, line = marks[marks.length - 2].lines, offset = marks[marks.length - 2].offset
+			};
 		} else {
-			return get_location();
+			return get_location ();
 		}
 	}
 
@@ -405,7 +420,7 @@ public abstract class GTeonoma.Parser : Object {
 	 * with {@link is_finished}.
 	 */
 	public Result parse(Type type, out Value @value) {
-		return parse_type(type, out @value, 0, 0);
+		return parse_type (type, out @value, 0, 0);
 	}
 
 	public signal void attempting_parse(string rule, uint precedence, uint depth, int offset, int lines);
@@ -417,40 +432,40 @@ public abstract class GTeonoma.Parser : Object {
 	internal Result parse_type(Type type, out Value @value, uint precedence, uint depth) {
 		var result = Result.FAIL;
 		var old_error = errors;
-		errors = new ErrorRoot.with_parent(get_location(), errors);
+		errors = new ErrorRoot.with_parent (get_location (), errors);
 		int mark_length = marks.length;
 		var start_lines = marks[marks.length - 1].lines;
 		var start_offset = marks[marks.length - 1].offset;
 
-		@value = Value(type);
+		@value = Value (type);
 		foreach (var rule in rules[type, precedence]) {
 			var memory = memories[marks[marks.length - 1].lines, marks[marks.length - 1].offset, rule];
 			if (memory == null) {
-				mark_set();
-				attempting_parse(rule.name, precedence, depth, start_offset, start_lines);
-				result = rule.parse(this, out @value, depth);
+				mark_set ();
+				attempting_parse (rule.name, precedence, depth, start_offset, start_lines);
+				result = rule.parse (this, out @value, depth);
 
-				memory = new Memory();
+				memory = new Memory ();
 				memory.value = @value;
 				memory.post_mark = marks[marks.length - 1];
 				memory.rule = rule;
 				memory.result = result;
 				memories[start_lines, start_offset] = memory;
-				finished_parse(result, rule.name, precedence, depth, start_offset, start_lines);
+				finished_parse (result, rule.name, precedence, depth, start_offset, start_lines);
 				if (result == Result.OK || result == Result.ABORT) {
-					mark_clear();
+					mark_clear ();
 					break;
 				} else {
-					errors = new ErrorRoot.with_sibling(get_location(), errors);
-					mark_rewind();
+					errors = new ErrorRoot.with_sibling (get_location (), errors);
+					mark_rewind ();
 				}
 			} else {
-				cache_hit(memory.result, memory.rule.name, precedence, depth, start_offset, start_lines);
+				cache_hit (memory.result, memory.rule.name, precedence, depth, start_offset, start_lines);
 				@value = memory.@value;
 				result = memory.result;
 				if (result == Result.OK || result == Result.ABORT) {
 					marks[marks.length - 1] = memory.post_mark;
-					reset(marks[marks.length - 1].index);
+					reset (marks[marks.length - 1].index);
 					break;
 				}
 			}
@@ -458,10 +473,10 @@ public abstract class GTeonoma.Parser : Object {
 		if (result == Result.OK) {
 			errors = old_error;
 		} else if (result == Result.ABORT) {
-			errors.clear_sibling();
+			errors.clear_sibling ();
 		}
 
-		assert(mark_length == marks.length);
+		assert (mark_length == marks.length);
 		return result;
 	}
 
@@ -470,17 +485,17 @@ public abstract class GTeonoma.Parser : Object {
 	 *
 	 * @param separator the format string used in between objects
 	 */
-	public Result parse_all<T>(out Gee.List<T> list, string separator = "%n") {
-		list = new Gee.ArrayList<T>();
-		while(!is_finished()) {
+	public Result parse_all<T> (out Gee.List<T> list, string separator = "%n") {
+		list = new Gee.ArrayList<T> ();
+		while (!is_finished ()) {
 			Value @value;
-			var result = parse(typeof(T), out @value);
+			var result = parse (typeof (T), out @value);
 			if (result == Result.OK) {
-				list.add(@value.get_object());
+				list.add (@value.get_object ());
 			} else {
 				return result;
 			}
-			if (!check_string(separator) && !is_finished()) {
+			if (!check_string (separator) && !is_finished ()) {
 				return Result.FAIL;
 			}
 		}
@@ -491,7 +506,7 @@ public abstract class GTeonoma.Parser : Object {
 	 * Note a parse error at the current position in the input stream.
 	 */
 	internal void push_error(string error) {
-		errors.add(error);
+		errors.add (error);
 	}
 
 	/**
@@ -506,7 +521,7 @@ public abstract class GTeonoma.Parser : Object {
 	 * Examine all current parse errors.
 	 */
 	public void visit_errors(ErrorHandler handler) {
-		errors.visit(handler);
+		errors.visit (handler);
 	}
 
 	/**
@@ -516,24 +531,35 @@ public abstract class GTeonoma.Parser : Object {
 }
 
 internal class GTeonoma.Memory : Object {
-	internal Value @value { get; set; }
-	internal mark post_mark { get; set; }
-	internal Rule rule { get; set; }
-	internal Result result { get; set; }
+	internal Value @value {
+		get;
+		set;
+	}
+	internal mark post_mark {
+		get;
+		set;
+	}
+	internal Rule rule {
+		get;
+		set;
+	}
+	internal Result result {
+		get; set;
+	}
 }
 
 internal class GTeonoma.MemoryBank : Object {
-	private Gee.TreeMap<int, Gee.TreeMap<int, Gee.List<Memory>>> memories;
+	private Gee.TreeMap<int, Gee.TreeMap<int, Gee.List<Memory> > > memories;
 	internal MemoryBank() {
-		memories = new Gee.TreeMap<int, Gee.TreeMap<int, Gee.List<Memory>>>();
+		memories = new Gee.TreeMap<int, Gee.TreeMap<int, Gee.List<Memory> > > ();
 	}
 
-	internal new Memory? get(int lines, int offset, Rule rule) {
-		if (!memories.has_key(lines)) {
+	internal new Memory? get (int lines, int offset, Rule rule) {
+		if (!memories.has_key (lines)) {
 			return null;
 		}
 		var line = memories[lines];
-		if (!line.has_key(offset)) {
+		if (!line.has_key (offset)) {
 			return null;
 		}
 		foreach (var memory in line[offset]) {
@@ -544,21 +570,21 @@ internal class GTeonoma.MemoryBank : Object {
 		return null;
 	}
 	internal new void set(int lines, int offset, Memory memory) {
-		Gee.TreeMap<int, Gee.List<Memory>> line;
-		if (memories.has_key(lines)) {
+		Gee.TreeMap<int, Gee.List<Memory> > line;
+		if (memories.has_key (lines)) {
 			line = memories[lines];
 		} else {
-			line = new Gee.TreeMap<int, Gee.List<Memory>>();
+			line = new Gee.TreeMap<int, Gee.List<Memory> > ();
 			memories[lines] = line;
 		}
 		Gee.List<Memory> list;
-		if (line.has_key(offset)) {
+		if (line.has_key (offset)) {
 			list = line[offset];
 		} else {
-			list = new Gee.ArrayList<Memory>();
+			list = new Gee.ArrayList<Memory> ();
 			line[offset] = list;
 		}
-		list.add(memory);
+		list.add (memory);
 	}
 }
 
@@ -577,24 +603,23 @@ public class GTeonoma.StringParser : Parser {
 	 * @param rules the parsing grammar to use
 	 * @param str the string to parse
 	 */
-	public StringParser(Rules rules, string str) {
-		base(rules);
+	public StringParser (Rules rules, string str) {
+		base (rules);
 		data = str;
 		source = "string";
 	}
 
 	protected override unichar get_c(ref long index) {
-		int idx = (int)index;
+		int idx = (int) index;
 		if (idx >= data.length) {
 			return '\0';
 		}
 		unichar c;
-		index = data.get_next_char(ref idx, out c) ? idx : data.length;
+		index = data.get_next_char (ref idx, out c) ? idx : data.length;
 		return c;
 	}
 
-	protected override void reset(long index) {
-	}
+	protected override void reset(long index) {}
 }
 
 /**
@@ -603,9 +628,9 @@ public class GTeonoma.StringParser : Parser {
 public class GTeonoma.FileParser : Parser {
 	private FileStream file;
 
-	private FileParser(Rules rules, owned FileStream file, string filename) {
-		base(rules);
-		this.file = (owned)file;
+	private FileParser (Rules rules, owned FileStream file, string filename) {
+		base (rules);
+		this.file = (owned) file;
 		source = filename;
 	}
 	/**
@@ -617,30 +642,30 @@ public class GTeonoma.FileParser : Parser {
 	 * @param filename the path to the file to be parsed
 	 * @return the new parser, or null if the file cannot be opened
 	 */
-	public static FileParser? open(Rules rules, string filename) {
-		var file = FileStream.open(filename, "r");
+	public static FileParser? open (Rules rules, string filename) {
+		var file = FileStream.open (filename, "r");
 		if (file == null) {
 			return null;
 		}
-		return new FileParser(rules, (owned) file, filename);
+		return new FileParser (rules, (owned) file, filename);
 	}
 
 	protected override unichar get_c(ref long index) {
 		uint8[] chars = {};
-		while (chars.length < 7 && (chars.length == 0 || !((string)chars).validate(chars.length))) {
+		while (chars.length < 7 && (chars.length == 0 || !((string) chars).validate (chars.length))) {
 			int val;
-			if ((val = file.getc()) == FileStream.EOF) {
+			if ((val = file.getc ()) == FileStream.EOF) {
 				return '\0';
 			}
 			chars += (uint8) val;
 		}
-		index = file.tell();
-		var c = ((string)chars).get_char_validated(chars.length);
+		index = file.tell ();
+		var c = ((string) chars).get_char_validated (chars.length);
 		return c == NO_CHAR ? '\0' : c;
 	}
 
 	protected override void reset(long index) {
-		file.seek(index, FileSeek.SET);
+		file.seek (index, FileSeek.SET);
 	}
 }
 
@@ -661,7 +686,7 @@ public abstract class GTeonoma.Printer : Object {
 	 */
 	private bool last_space;
 
-	protected Printer(Rules rules) {
+	protected Printer (Rules rules) {
 		this.rules = rules;
 	}
 
@@ -672,51 +697,58 @@ public abstract class GTeonoma.Printer : Object {
 	 */
 	internal void append(string str) {
 		unichar c;
-		for (var i = 0; str.get_next_char (ref i, out c);) {
+		for (var i = 0; str.get_next_char (ref i, out c); ) {
 			if (c == '\n') {
-				append_c('\n');
+				append_c ('\n');
 				for (var count = 0; count < indent; count++) {
-					append_c('\t');
+					append_c ('\t');
 				}
 				last_space = true;
 			} else if (c == '%') {
-				str.get_next_char(ref i, out c);
+				str.get_next_char (ref i, out c);
 				switch (c) {
-					case 'I':
-						indent++;
-						break;
-					case 'i':
-						indent--;
-						break;
-					case '%':
-						append_c('%');
-						last_space = false;
-						break;
-					case 'n':
-						append_c('\n');
-						for (var count = 0; count < indent; count++) {
-							append_c('\t');
-						}
-						last_space = true;
-						break;
-					case '-':
-						append_c(' ');
-						last_space = true;
-						break;
-					case '_':
-						if (!last_space) {
-							append_c(' ');
-							last_space = true;
-						}
-						break;
-					case ' ':
-						break;
-					default:
-						assert_not_reached();
+				 case 'I' :
+					 indent++;
+					 break;
+
+				 case 'i' :
+					 indent--;
+					 break;
+
+				 case '%':
+					 append_c ('%');
+					 last_space = false;
+					 break;
+
+				 case 'n':
+					 append_c ('\n');
+					 for (var count = 0; count < indent; count++) {
+						 append_c ('\t');
+					 }
+					 last_space = true;
+					 break;
+
+				 case '-':
+					 append_c (' ');
+					 last_space = true;
+					 break;
+
+				 case '_':
+					 if (!last_space) {
+						 append_c (' ');
+						 last_space = true;
+					 }
+					 break;
+
+				 case ' ':
+					 break;
+
+				 default:
+					 assert_not_reached ();
 				}
 			} else {
-				append_c(c);
-				last_space = c.isspace();
+				append_c (c);
+				last_space = c.isspace ();
 			}
 		}
 	}
@@ -733,16 +765,16 @@ public abstract class GTeonoma.Printer : Object {
 	 * Write a typed object to the output stream.
 	 */
 	public void print(Value @value) {
-		rules[@value.type()].first().print(this, @value);
+		rules[@value.type ()].first ().print (this, @value);
 	}
 
 	/**
 	 * Write an object to the output stream, determining type automatically.
 	 */
 	public void print_obj(Object item) {
-		Value @value = Value(item.get_type());
-		@value.set_object(item);
-		print(@value);
+		Value @value = Value (item.get_type ());
+		@value.set_object (item);
+		print (@value);
 	}
 
 	/**
@@ -754,9 +786,9 @@ public abstract class GTeonoma.Printer : Object {
 			if (first) {
 				first = false;
 			} else {
-				append(separator);
+				append (separator);
 			}
-			print_obj(item);
+			print_obj (item);
 		}
 	}
 }
@@ -765,12 +797,12 @@ public abstract class GTeonoma.Printer : Object {
  * Pretty-print output to standard output
  */
 public class GTeonoma.ConsolePrinter : Printer {
-	public ConsolePrinter(Rules rules) {
-		base(rules);
+	public ConsolePrinter (Rules rules) {
+		base (rules);
 	}
 
 	internal override void append_c(unichar c) {
-		stdout.puts(c.to_string());
+		stdout.puts (c.to_string ());
 	}
 }
 
@@ -779,21 +811,21 @@ public class GTeonoma.ConsolePrinter : Printer {
  */
 public class GTeonoma.FilePrinter : Printer {
 	private FileStream stream;
-	private FilePrinter(Rules rules, owned FileStream stream) {
-		base(rules);
+	private FilePrinter (Rules rules, owned FileStream stream) {
+		base (rules);
 		this.stream = (owned) stream;
 	}
 
-	public FilePrinter? open(Rules rules, string filename) {
-		var stream = FileStream.open(filename, "w");
+	public FilePrinter? open (Rules rules, string filename) {
+		var stream = FileStream.open (filename, "w");
 		if (stream == null) {
 			return null;
 		}
-		return new FilePrinter(rules, (owned) stream);
+		return new FilePrinter (rules, (owned) stream);
 	}
 
 	internal override void append_c(unichar c) {
-		stream.puts(c.to_string());
+		stream.puts (c.to_string ());
 	}
 }
 
@@ -812,13 +844,12 @@ public class GTeonoma.StringPrinter : Printer {
 		}
 	}
 
-	public StringPrinter(Rules rules) {
-		base(rules);
-		buffer = new StringBuilder();
+	public StringPrinter (Rules rules) {
+		base (rules);
+		buffer = new StringBuilder ();
 	}
 
 	internal override void append_c(unichar c) {
-		buffer.append_unichar(c);
+		buffer.append_unichar (c);
 	}
 }
-
