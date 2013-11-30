@@ -222,6 +222,7 @@ internal class GTeonoma.IdentifierParser : CustomParser<Identifier> {
 		return new Identifier(str);
 	}
 }
+[CCode(gir_namespace = "libgteonoma", gir_version = "1")]
 namespace GTeonoma {
 	public void log_to_console(Parser parser) {
 		parser.attempting_parse.connect((rule, precedence, depth, offset, lines) => {
