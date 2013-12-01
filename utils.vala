@@ -125,7 +125,7 @@ internal class GTeonoma.StringLiteralParser : CustomParser<StringLiteral> {
 	public override StringLiteral build_object(string str) {
 		var literal = new StringLiteral ();
 		var buffer = new StringBuilder ();
-		for (var it = 1; it < str.length - 1; it++) {
+		for (var it = has_quotes ? 1 : 0; it < str.length - (has_quotes ? 1 : 0); it++) {
 			if (str[it] == '\\') {
 				switch (str[++it]) {
 				 case 'a':
