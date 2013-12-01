@@ -1125,10 +1125,13 @@ internal class GTeonoma.UInt64Rule : IntegerRule {
  * Rule to parse a double.
  */
 internal class GTeonoma.FloatRule : Rule {
-	public FloatRule () {}
+	public FloatRule () {
+		this.name = "floating point constant";
+	}
 
 	internal override Result parse(Parser p, out Value @value, uint depth) {
 		@value = Value (typeof (double));
+		bool not_an_int = false;
 		var accumulator = new StringBuilder ();
 		if (p[false] == '-') {
 			accumulator.append_unichar (p[true]);
@@ -1138,14 +1141,14 @@ internal class GTeonoma.FloatRule : Rule {
 		}
 		if (p[false] == '.') {
 			accumulator.append_unichar (p[true]);
-		} else {
-			return Result.FAIL;
-		}
-		while (p[false].isdigit ()) {
-			accumulator.append_unichar (p[true]);
+			not_an_int = true;
+			while (p[false].isdigit ()) {
+				accumulator.append_unichar (p[true]);
+			}
 		}
 		var exponent = p[false];
 		if (exponent == 'e' || exponent == 'E') {
+			not_an_int = true;
 			accumulator.append_unichar (p[true]);
 			if (p[false] == '-') {
 				accumulator.append_unichar (p[true]);
@@ -1154,8 +1157,8 @@ internal class GTeonoma.FloatRule : Rule {
 				accumulator.append_unichar (p[true]);
 			}
 		}
-		double result;
-		if (double.try_parse (accumulator.str, out result)) {
+		double result = 0;
+		if (not_an_int && double.try_parse (accumulator.str, out result)) {
 			@value.set_double (result);
 			return Result.OK;
 		} else {
