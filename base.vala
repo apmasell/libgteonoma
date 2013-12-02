@@ -602,11 +602,12 @@ public class GTeonoma.StringParser : Parser {
 	 *
 	 * @param rules the parsing grammar to use
 	 * @param str the string to parse
+	 * @param name the source name to use
 	 */
-	public StringParser (Rules rules, string str) {
+	public StringParser (Rules rules, string str, string name = "string") {
 		base (rules);
 		data = str;
-		source = "string";
+		source = name;
 	}
 
 	protected override unichar get_c(ref long index) {
