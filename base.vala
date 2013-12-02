@@ -817,7 +817,7 @@ public class GTeonoma.FilePrinter : Printer {
 		this.stream = (owned) stream;
 	}
 
-	public FilePrinter? open (Rules rules, string filename) {
+	public static FilePrinter? open (Rules rules, string filename) {
 		var stream = FileStream.open (filename, "w");
 		if (stream == null) {
 			return null;
