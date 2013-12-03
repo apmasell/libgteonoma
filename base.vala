@@ -34,7 +34,11 @@ public enum GTeonoma.Result {
 	 * Once commited, the parse is sure that is along the right path. When
 	 * aborting, the parser will not attempt to recover.
 	 */
-	ABORT
+	ABORT,
+	/**
+	 * Parsing failed due to reaching the end of the input stream in one case.
+	 */
+	EOI
 }
 
 /**
@@ -184,7 +188,7 @@ public abstract class GTeonoma.Parser : Object {
 	 *
 	 * If parsing fails, the input stream will be rewound to the position before.
 	 */
-	internal bool check_string(string s, string? display_error = null) {
+	internal bool check_string(string s, string? display_error = null, out bool end_of_input = null) {
 		mark_set ();
 		var space = marks[marks.length - 1].last_space ? 1 : 0;
 		unichar c;
@@ -195,6 +199,7 @@ public abstract class GTeonoma.Parser : Object {
 					if (display_error != null) {
 						push_error (@"Expected whitespace in $(display_error).");
 					}
+					end_of_input = get (false) == '\0';
 					mark_rewind ();
 					return false;
 				}
@@ -215,6 +220,7 @@ public abstract class GTeonoma.Parser : Object {
 						 if (display_error != null) {
 							 push_error (@"Expected whitespace in $(display_error).");
 						 }
+						 end_of_input = get (false) == '\0';
 						 mark_rewind ();
 						 return false;
 					 }
@@ -229,6 +235,7 @@ public abstract class GTeonoma.Parser : Object {
 				if (display_error != null) {
 					push_error (@"Expected `$(c.to_string())' but got `$(n.to_string())' in $(display_error).");
 				}
+				end_of_input = get (false) == '\0';
 				mark_rewind ();
 				return false;
 			} else {
@@ -236,6 +243,7 @@ public abstract class GTeonoma.Parser : Object {
 			}
 		}
 		mark_clear ();
+		end_of_input = false;
 		return true;
 	}
 
@@ -305,13 +313,14 @@ public abstract class GTeonoma.Parser : Object {
 	/**
 	 * Pull one C-style identifier from the input stream.
 	 */
-	internal string get_word() {
+	internal string get_word(out bool end_of_input) {
 		var buffer = new StringBuilder ();
 		var first = true;
 		while (is_identifier (get (false), first)) {
 			buffer.append_unichar (get (true));
 			first = false;
 		}
+		end_of_input = get (false) == '\0';
 		return buffer.str;
 	}
 
@@ -431,6 +440,7 @@ public abstract class GTeonoma.Parser : Object {
 
 	internal Result parse_type(Type type, out Value @value, uint precedence, uint depth) {
 		var result = Result.FAIL;
+		bool end_of_input = false;
 		var old_error = errors;
 		errors = new ErrorRoot.with_parent (get_location (), errors);
 		int mark_length = marks.length;
@@ -469,6 +479,9 @@ public abstract class GTeonoma.Parser : Object {
 					break;
 				}
 			}
+			if (result == Result.EOI) {
+				end_of_input = true;
+			}
 		}
 		if (result == Result.OK) {
 			errors = old_error;
@@ -477,7 +490,7 @@ public abstract class GTeonoma.Parser : Object {
 		}
 
 		assert (mark_length == marks.length);
-		return result;
+		return (result == Result.FAIL && end_of_input) ? Result.EOI : result;
 	}
 
 	/**

@@ -742,7 +742,7 @@ internal class GTeonoma.ObjectRule : Rule {
 				 if (result == Result.OK) {
 					 obj.set_property (chunks[index].property, prop_value);
 					 p.mark_clear ();
-				 } else if (chunks[index].optional && result == Result.FAIL) {
+				 } else if (chunks[index].optional && (result == Result.FAIL || result == Result.EOI)) {
 					 /* Ignore. */
 					 p.mark_rewind ();
 				 } else {
@@ -753,6 +753,7 @@ internal class GTeonoma.ObjectRule : Rule {
 				 break;
 
 			 case Token.LIST:
+				 bool end_of_input = false;
 				 var list = new Gee.ArrayList<Object> ();
 				 Value child_value;
 				 Result result;
@@ -761,7 +762,7 @@ internal class GTeonoma.ObjectRule : Rule {
 				 while ((result = p.parse_type (chunks[index].type, out child_value, chunks[index].next[precedence], depth + 1)) == Result.OK) {
 					 list.add (child_value.get_object ());
 					 p.mark_reset ();
-					 if (!p.check_string (chunks[index].word)) {
+					 if (!p.check_string (chunks[index].word, null, out end_of_input)) {
 						 break;
 					 }
 				 }
@@ -772,13 +773,16 @@ internal class GTeonoma.ObjectRule : Rule {
 				 } else if (!chunks[index].optional && list.size == 0) {
 					 p.push_error (@"Expected $(p.names_for(chunks[index].type)) missing in $(name).");
 					 p.mark_clear ();
-					 return committed ? Result.ABORT : Result.FAIL;
+					 return (end_of_input || result == Result.EOI) ? Result.EOI : (committed ? Result.ABORT : Result.FAIL);
 				 } else {
 					 p.push_error (@"Expected one of $(p.names_for(chunks[index].type)) in $(name).");
 					 p.mark_rewind ();
 					 Value list_value = Value (typeof (Gee.List));
 					 list_value.set_object (list);
 					 obj.set_property (chunks[index].property, list_value);
+					 if (result == Result.EOI && index < chunks.length - 1) {
+						 return Result.EOI;
+					 }
 				 }
 				 break;
 
@@ -786,8 +790,9 @@ internal class GTeonoma.ObjectRule : Rule {
 				 assert_not_reached ();         //TODO
 
 			 case Token.SYMBOL:
-				 if (!p.check_string (chunks[index].word, name)) {
-					 return committed ? Result.ABORT : Result.FAIL;
+				 bool end_of_input;
+				 if (!p.check_string (chunks[index].word, name, out end_of_input)) {
+					 return end_of_input ? Result.EOI : (committed ? Result.ABORT : Result.FAIL);
 				 }
 				 break;
 			}
@@ -871,11 +876,12 @@ internal class GTeonoma.EnumRule : Rule {
 
 	internal override Result parse(Parser p, out Value @value, uint depth) {
 		@value = Value (type);
-		var word = p.get_word ();
+		bool end_of_input;
+		var word = p.get_word (out end_of_input);
 		var enum_value = enum_class.get_value_by_nick (word);
 		if (enum_value == null) {
 			p.push_error (@"Unexpected symbol `$word'.");
-			return Result.FAIL;
+			return end_of_input ? Result.EOI : Result.FAIL;
 		} else {
 			@value.set_enum (enum_value.value);
 			return Result.OK;
@@ -906,7 +912,7 @@ internal class GTeonoma.FlagsRule : Rule {
 		while (true) {
 			p.mark_set ();
 			p.consume_whitespace ();
-			var word = p.get_word ();
+			var word = p.get_word (null);
 			if (word.length == 0) {
 				p.mark_rewind ();
 				break;
@@ -1004,6 +1010,9 @@ internal abstract class GTeonoma.IntegerRule : Rule {
 				 accumulator = accumulator * 10 + p[true].digit_value ();
 			 }
 			 break;
+
+		 case '\0':
+			 return Result.EOI;
 
 		 default:
 			 return Result.FAIL;
@@ -1162,7 +1171,7 @@ internal class GTeonoma.FloatRule : Rule {
 			@value.set_double (result);
 			return Result.OK;
 		} else {
-			return Result.FAIL;
+			return p[false] == '\0' ?  Result.EOI : Result.FAIL;
 		}
 	}
 	internal override void print(Printer p, Value @value) requires (@value.type () == typeof (double)) {
@@ -1188,6 +1197,7 @@ internal class GTeonoma.CustomRule<T> : Rule {
 		CustomParser<T> state = constructor ();
 		var seen_accepting = false;
 		long last_buffer_len = 0;
+		var end_of_input = false;
 		var buffer = new StringBuilder ();
 
 		var source_location = p.get_location ();
@@ -1197,6 +1207,7 @@ internal class GTeonoma.CustomRule<T> : Rule {
 		while (!finished) {
 			var c = p[true];
 			if (c == '\0') {
+				end_of_input = true;
 				p.push_error (@"Unexpected end of input in $name.");
 				p.mark_rewind ();
 				finished = true;
@@ -1236,7 +1247,7 @@ internal class GTeonoma.CustomRule<T> : Rule {
 			@value.set_object (obj);
 			return Result.OK;
 		} else {
-			return Result.FAIL;
+			return end_of_input ? Result.EOI : Result.FAIL;
 		}
 	}
 
