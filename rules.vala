@@ -641,11 +641,11 @@ public class GTeonoma.Rules : Object {
  */
 public errordomain GTeonoma.RegisterError {
 	/**
-	 * Format string supplied when no required.
+	 * Format string supplied when not required.
 	 */
 	UNNECESSARY_FORMAT,
 	/**
-	 * Error informat string.
+	 * Error in format string.
 	 */
 	BAD_FORMAT,
 	/**
@@ -665,7 +665,7 @@ public errordomain GTeonoma.RegisterError {
 	 */
 	LEFT_RECURSION,
 	/**
-	 * Non-existent property reference.
+	 * Non-existent property in target class.
 	 */
 	MISSING_PROPERTY
 }
