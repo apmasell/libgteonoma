@@ -780,9 +780,6 @@ internal class GTeonoma.ObjectRule : Rule {
 					 Value list_value = Value (typeof (Gee.List));
 					 list_value.set_object (list);
 					 obj.set_property (chunks[index].property, list_value);
-					 if (result == Result.EOI && index < chunks.length - 1) {
-						 return Result.EOI;
-					 }
 				 }
 				 break;
 
