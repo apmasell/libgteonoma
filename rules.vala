@@ -16,11 +16,11 @@ internal abstract class GTeonoma.Rule : Object {
 	/**
 	 * Parse a particular value from the parse stream.
 	 */
-	internal abstract Result parse(Parser p, out Value ret_value, uint depth);
+	internal abstract Result parse (Parser p, out Value ret_value, uint depth);
 	/**
 	 * Pretty-print the parsed value.
 	 */
-	internal abstract void print(Printer p, Value @value);
+	internal abstract void print (Printer p, Value @value);
 }
 
 /**
@@ -57,7 +57,7 @@ internal enum GTeonoma.NextPrecedence {
 	RESET,
 	SAME,
 	HIGHER;
-	internal uint get(uint current_precedence) {
+	internal uint get (uint current_precedence) {
 		switch (this) {
 		 case NextPrecedence.RESET:
 			 return 0;
@@ -83,10 +83,10 @@ internal struct GTeonoma.chunk {
 		this.property = property;
 		this.word = word;
 	}
-	internal chunk.commit() {
+	internal chunk.commit () {
 		token = Token.COMMIT;
 	}
-	internal chunk.list(string property, string word, Type type, bool optional, NextPrecedence next) {
+	internal chunk.list (string property, string word, Type type, bool optional, NextPrecedence next) {
 		token = Token.LIST;
 		this.optional = optional;
 		this.next = next;
@@ -94,13 +94,13 @@ internal struct GTeonoma.chunk {
 		this.word = word;
 		this.type = type;
 	}
-	internal chunk.prop(string property, bool optional, NextPrecedence next) {
+	internal chunk.prop (string property, bool optional, NextPrecedence next) {
 		token = Token.PROPERTY;
 		this.optional = optional;
 		this.next = next;
 		this.property = property;
 	}
-	internal chunk.symbol(string word) {
+	internal chunk.symbol (string word) {
 		token = Token.SYMBOL;
 		this.word = word;
 	}
@@ -132,7 +132,7 @@ internal struct GTeonoma.chunk {
 	/**
 	 * Format this chunk back into something approximating the string that created it.
 	 */
-	internal string to_string() {
+	internal string to_string () {
 		switch (token) {
 		 case Token.BOOL :
 			 return @"%b{$(property)}{$(word)}";
@@ -175,11 +175,11 @@ internal enum GTeonoma.ObjectParseState {
 internal class GTeonoma.OrderedRule {
 	internal Rule rule;
 	internal int order;
-	internal OrderedRule(Rule rule, int order) {
+	internal OrderedRule (Rule rule, int order) {
 		this.rule = rule;
 		this.order = order;
 	}
-	internal static int compare(OrderedRule a, OrderedRule b) {
+	internal static int compare (OrderedRule a, OrderedRule b) {
 		if (a.rule.precedence > b.rule.precedence) {
 			return 1;
 		}
@@ -206,7 +206,7 @@ public class GTeonoma.Rules : Object {
 	/**
 	 * Retrieve the correct rule for a particular type
 	 */
-	internal new Gee.List<Rule> get(Type type, uint precedence = 0) {
+	internal new Gee.List<Rule> get (Type type, uint precedence = 0) {
 		var list = new Gee.ArrayList<Rule> ();
 		if (rules.has_key (type)) {
 			foreach (var o_rule in rules[type]) {
@@ -221,7 +221,7 @@ public class GTeonoma.Rules : Object {
 		return list;
 	}
 
-	NextPrecedence get_next_precedence(char modifier, string prop_name, Type type, Type prop_type, ref bool left_recursion, bool optional) throws RegisterError {
+	NextPrecedence get_next_precedence (char modifier, string prop_name, Type type, Type prop_type, ref bool left_recursion, bool optional) throws RegisterError {
 		switch (modifier) {
 		 case '\0':
 			 /* We could recurse infinitely, and the grammar hasn't told
@@ -523,14 +523,14 @@ public class GTeonoma.Rules : Object {
 	/**
 	 * Register the double type.
 	 */
-	public void register_double() throws RegisterError {
+	public void register_double () throws RegisterError {
 		this[typeof (double)] = new FloatRule ();
 	}
 
 	/**
 	 * Add support for C string literals using {@link StringLiteral}.
 	 */
-	public void register_string_literal(bool has_quotes = true) {
+	public void register_string_literal (bool has_quotes = true) {
 		register_custom<StringLiteral> ("string", () => new StringLiteralParser (has_quotes), (literal) => has_quotes ? @"\"$(literal.str.escape(" "))\"" : literal.str.escape (""));
 	}
 
@@ -540,7 +540,7 @@ public class GTeonoma.Rules : Object {
 	 * @param allow_unicode controls of Unicode characters are allowed in an identifier (similar to Java).
 	 * @param allow_at permits an ''\@'' character to preceed an identifier like Vala and C#.
 	 */
-	public void register_identifier(bool allow_unicode = false, bool allow_at = false) {
+	public void register_identifier (bool allow_unicode = false, bool allow_at = false) {
 		register_custom<Identifier> ("identifier", () => new IdentifierParser (allow_unicode, allow_at), (identifier) => identifier.name);
 	}
 
@@ -548,7 +548,7 @@ public class GTeonoma.Rules : Object {
 	 * Register a new signed integer type.
 	 * @param size in bits (8, 32, or 64)
 	 */
-	public void register_int(int size, Type type) throws RegisterError requires(type.is_fundamental ()) {
+	public void register_int (int size, Type type) throws RegisterError requires (type.is_fundamental ()) {
 		switch (size) {
 		 case 8:
 			 this[type] = new Int8Rule (type);
@@ -571,7 +571,7 @@ public class GTeonoma.Rules : Object {
 	 * Register a new unsigned integer type.
 	 * @param size in bits (8, 32, or 64)
 	 */
-	public void register_uint(int size, Type type) throws RegisterError requires(type.is_fundamental ()) {
+	public void register_uint (int size, Type type) throws RegisterError requires (type.is_fundamental ()) {
 		switch (size) {
 		 case 8:
 			 this[type] = new UInt8Rule (type);
@@ -612,7 +612,7 @@ public class GTeonoma.Rules : Object {
 	/**
 	 * Register a rule for a specified type and all of its ancestral types.
 	 */
-	internal new void set(Type type, Rule rule) {
+	internal new void set (Type type, Rule rule) {
 		var interfaces = type.interfaces ();
 		if (interfaces != null) {
 			foreach (var interface_type in interfaces) {
@@ -624,7 +624,7 @@ public class GTeonoma.Rules : Object {
 		}
 	}
 
-	private void set_type(Type type, Rule rule) {
+	private void set_type (Type type, Rule rule) {
 		Gee.TreeSet<OrderedRule> list;
 		if (rules.has_key (type)) {
 			list = rules[type];
@@ -681,13 +681,13 @@ internal class GTeonoma.FailRule : Rule {
 		error = @"Internal error: No rule for type `$(type.name())'.";
 	}
 
-	internal override Result parse(Parser p, out Value @value, uint depth) {
+	internal override Result parse (Parser p, out Value @value, uint depth) {
 		@value = Value (typeof (Object));
 		p.push_error (error);
 		return Result.ABORT;
 	}
 
-	internal override void print(Printer p, Value @value) {
+	internal override void print (Printer p, Value @value) {
 		p.append ("\n");
 		p.append (error);
 		p.append ("\n");
@@ -702,7 +702,7 @@ internal class GTeonoma.ObjectRule : Rule {
 	private ObjectClass obj_type;
 	private chunk[] chunks;
 
-	internal ObjectRule(string name, Type type, uint precedence, chunk[] chunks) {
+	internal ObjectRule (string name, Type type, uint precedence, chunk[] chunks) {
 		this.name = name;
 		this.type = type;
 		this.obj_type = (ObjectClass) type.class_ref ();
@@ -710,7 +710,7 @@ internal class GTeonoma.ObjectRule : Rule {
 		this.precedence = precedence;
 	}
 
-	internal override Result parse(Parser p, out Value ret_value, uint depth) {
+	internal override Result parse (Parser p, out Value ret_value, uint depth) {
 		ret_value = Value (type);
 		var obj = Object.new (type);
 		if (obj is SourceInfo) {
@@ -797,13 +797,13 @@ internal class GTeonoma.ObjectRule : Rule {
 		ret_value.set_object (obj);
 		return Result.OK;
 	}
-	Value get_prop(string prop_name, Object obj) {
+	Value get_prop (string prop_name, Object obj) {
 		Value @value = Value (obj_type.find_property (prop_name).value_type);
 		obj.get_property (prop_name, ref @value);
 		return @value;
 	}
 
-	internal override void print(Printer p, Value @value) requires (@value.type ().is_object ()) {
+	internal override void print (Printer p, Value @value) requires (@value.type ().is_object ()) {
 		Object obj = @value.get_object ();
 		assert (obj.get_type ().is_a (type));
 		for (var index = 0; index < chunks.length; index++) {
@@ -871,7 +871,7 @@ internal class GTeonoma.EnumRule : Rule {
 		this.enum_class = (EnumClass) type.class_ref ();
 	}
 
-	internal override Result parse(Parser p, out Value @value, uint depth) {
+	internal override Result parse (Parser p, out Value @value, uint depth) {
 		@value = Value (type);
 		bool end_of_input;
 		var word = p.get_word (out end_of_input);
@@ -885,7 +885,7 @@ internal class GTeonoma.EnumRule : Rule {
 		}
 	}
 
-	internal override void print(Printer p, Value @value) requires (@value.type () == type) {
+	internal override void print (Printer p, Value @value) requires (@value.type () == type) {
 		var enum_value = enum_class.get_value (@value.get_enum ());
 		assert (enum_value != null);
 		p.append (enum_value.value_nick);
@@ -904,7 +904,7 @@ internal class GTeonoma.FlagsRule : Rule {
 		this.flags_class = (FlagsClass) type.class_ref ();
 	}
 
-	internal override Result parse(Parser p, out Value @value, uint depth) {
+	internal override Result parse (Parser p, out Value @value, uint depth) {
 		@value = Value (type);
 		while (true) {
 			p.mark_set ();
@@ -925,7 +925,7 @@ internal class GTeonoma.FlagsRule : Rule {
 		return Result.OK;
 	}
 
-	internal override void print(Printer p, Value @value) requires (@value.type () == type) {
+	internal override void print (Printer p, Value @value) requires (@value.type () == type) {
 		var first = true;
 		foreach (unowned FlagsValue flag in flags_class.values) {
 			if ((flag.value & @value.get_flags ()) == flag.value) {
@@ -952,7 +952,7 @@ internal abstract class GTeonoma.IntegerRule : Rule {
 		this.type = type;
 	}
 
-	internal override Result parse(Parser p, out Value @value, uint depth) {
+	internal override Result parse (Parser p, out Value @value, uint depth) {
 		@value = Value (type);
 		unichar c;
 		uint64 accumulator = 0;
@@ -1033,17 +1033,17 @@ internal abstract class GTeonoma.IntegerRule : Rule {
 		//TODO longs and unsigned don't make sense, do they?
 		return set_value (accumulator, negate, ref @value) ?  Result.OK : Result.FAIL;
 	}
-	protected abstract bool set_value(uint64 number, bool negate, ref Value @value);
+	protected abstract bool set_value (uint64 number, bool negate, ref Value @value);
 }
 
 internal class GTeonoma.Int8Rule : IntegerRule {
 	public Int8Rule (Type type) {
 		base (type);
 	}
-	internal override void print(Printer p, Value @value) {
+	internal override void print (Printer p, Value @value) {
 		p.append (@value.get_char ().to_string ());
 	}
-	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
+	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (number > int8.MAX) {
 			return false;
 		}
@@ -1055,10 +1055,10 @@ internal class GTeonoma.Int32Rule : IntegerRule {
 	public Int32Rule (Type type) {
 		base (type);
 	}
-	internal override void print(Printer p, Value @value) {
+	internal override void print (Printer p, Value @value) {
 		p.append (@value.get_int ().to_string ());
 	}
-	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
+	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (number > int32.MAX) {
 			return false;
 		}
@@ -1070,10 +1070,10 @@ internal class GTeonoma.Int64Rule : IntegerRule {
 	public Int64Rule (Type type) {
 		base (type);
 	}
-	internal override void print(Printer p, Value @value) {
+	internal override void print (Printer p, Value @value) {
 		p.append (@value.get_int64 ().to_string ());
 	}
-	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
+	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (number > int64.MAX) {
 			return false;
 		}
@@ -1085,10 +1085,10 @@ internal class GTeonoma.UInt8Rule : IntegerRule {
 	public UInt8Rule (Type type) {
 		base (type);
 	}
-	internal override void print(Printer p, Value @value) {
+	internal override void print (Printer p, Value @value) {
 		p.append (@value.get_uchar ().to_string ());
 	}
-	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
+	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (number > uint8.MAX || negate) {
 			return false;
 		}
@@ -1100,10 +1100,10 @@ internal class GTeonoma.UInt32Rule : IntegerRule {
 	public UInt32Rule (Type type) {
 		base (type);
 	}
-	internal override void print(Printer p, Value @value) {
+	internal override void print (Printer p, Value @value) {
 		p.append (@value.get_uint ().to_string ());
 	}
-	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
+	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (number > uint32.MAX || negate) {
 			return false;
 		}
@@ -1115,10 +1115,10 @@ internal class GTeonoma.UInt64Rule : IntegerRule {
 	public UInt64Rule (Type type) {
 		base (type);
 	}
-	internal override void print(Printer p, Value @value) {
+	internal override void print (Printer p, Value @value) {
 		p.append (@value.get_uint64 ().to_string ());
 	}
-	protected override bool set_value(uint64 number, bool negate, ref Value @value) {
+	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (negate) {
 			return false;
 		}
@@ -1135,7 +1135,7 @@ internal class GTeonoma.FloatRule : Rule {
 		this.name = "floating point constant";
 	}
 
-	internal override Result parse(Parser p, out Value @value, uint depth) {
+	internal override Result parse (Parser p, out Value @value, uint depth) {
 		@value = Value (typeof (double));
 		bool not_an_int = false;
 		var accumulator = new StringBuilder ();
@@ -1171,7 +1171,7 @@ internal class GTeonoma.FloatRule : Rule {
 			return p[false] == '\0' ?  Result.EOI : Result.FAIL;
 		}
 	}
-	internal override void print(Printer p, Value @value) requires (@value.type () == typeof (double)) {
+	internal override void print (Printer p, Value @value) requires (@value.type () == typeof (double)) {
 		p.append (@value.get_double ().to_string ());
 	}
 }
@@ -1181,7 +1181,7 @@ internal class GTeonoma.CustomRule<T> : Rule {
 	private CustomParser.CustomParserFactory<T> constructor;
 	private CustomParser.StringifyObject<T> stringifier;
 
-	internal CustomRule(string? name, owned CustomParser.CustomParserFactory<T> constructor, owned CustomParser.StringifyObject<T> stringifier) {
+	internal CustomRule (string? name, owned CustomParser.CustomParserFactory<T> constructor, owned CustomParser.StringifyObject<T> stringifier) {
 		type = typeof (T);
 		assert (type.is_a (typeof (Object)));
 		this.name = name?? type.name ();
@@ -1189,7 +1189,7 @@ internal class GTeonoma.CustomRule<T> : Rule {
 		this.stringifier = (owned) stringifier;
 	}
 
-	internal override Result parse(Parser p, out Value @value, uint depth) {
+	internal override Result parse (Parser p, out Value @value, uint depth) {
 		@value = Value (type);
 		CustomParser<T> state = constructor ();
 		var seen_accepting = false;
@@ -1248,7 +1248,7 @@ internal class GTeonoma.CustomRule<T> : Rule {
 		}
 	}
 
-	internal override void print(Printer p, Value @value) requires (@value.type () == type) {
+	internal override void print (Printer p, Value @value) requires (@value.type () == type) {
 		Object obj = @value.get_object ();
 		assert (obj.get_type ().is_a (type));
 		p.append (stringifier ((T) obj));
@@ -1284,7 +1284,7 @@ public abstract class GTeonoma.CustomParser<T> : Object {
 	 *
 	 * @return the type of the new state of the DFA.
 	 */
-	public abstract StateType next_state(unichar input);
+	public abstract StateType next_state (unichar input);
 
 	/**
 	 * The type of state the parser is currently in.
@@ -1324,7 +1324,7 @@ public abstract class GTeonoma.CustomParser<T> : Object {
 	/**
 	 * Construct the output object given the validated input.
 	 */
-	public abstract T build_object(string str);
+	public abstract T build_object (string str);
 
 	/**
 	 * Pretty print a custom-parsed object.

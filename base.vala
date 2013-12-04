@@ -116,15 +116,15 @@ internal class GTeonoma.ErrorRoot : Object {
 		this.parent = sibling.parent;
 	}
 
-	internal void add(string error) {
+	internal void add (string error) {
 		errors.add (error);
 	}
 
-	internal void clear_sibling() {
+	internal void clear_sibling () {
 		sibling = null;
 	}
 
-	internal void visit(Parser.ErrorHandler visitor) {
+	internal void visit (Parser.ErrorHandler visitor) {
 		for (var er = this; er != null; er = er.sibling) {
 			foreach (var str in er.errors) {
 				visitor (source, str);
@@ -188,7 +188,7 @@ public abstract class GTeonoma.Parser : Object {
 	 *
 	 * If parsing fails, the input stream will be rewound to the position before.
 	 */
-	internal bool check_string(string s, string? display_error = null, out bool end_of_input = null) {
+	internal bool check_string (string s, string? display_error = null, out bool end_of_input = null) {
 		mark_set ();
 		var space = marks[marks.length - 1].last_space ? 1 : 0;
 		unichar c;
@@ -250,7 +250,7 @@ public abstract class GTeonoma.Parser : Object {
 	/**
 	 * Consume any white space tokens in the input stream and return the number collected.
 	 */
-	internal int consume_whitespace() {
+	internal int consume_whitespace () {
 		unichar c;
 		var count = 0;
 		while ((c = get (false)) != '\0' && c.isspace ()) {
@@ -267,7 +267,7 @@ public abstract class GTeonoma.Parser : Object {
 	 * unchanged (i.e., peek).
 	 * @return the character or nul if there are no more characters
 	 */
-	internal new unichar get(bool consume = true) {
+	internal new unichar get (bool consume = true) {
 		if (marks[marks.length - 1].last == NO_CHAR) {
 			unichar c = get_c (ref marks[marks.length - 1].index);
 			if (c == '\n' || c == '\r') {
@@ -299,12 +299,12 @@ public abstract class GTeonoma.Parser : Object {
 	 * @param index the last position read in the stream. It should be updated to
 	 * the next position in the stream.
 	 */
-	protected new abstract unichar get_c(ref long index);
+	protected new abstract unichar get_c (ref long index);
 
 	/**
 	 * Describe the current location of the input stream.
 	 */
-	public source_location get_location() {
+	public source_location get_location () {
 		return source_location () {
 			       source = this.source, line = marks[marks.length - 1].lines, offset = marks[marks.length - 1].offset
 		};
@@ -313,7 +313,7 @@ public abstract class GTeonoma.Parser : Object {
 	/**
 	 * Pull one C-style identifier from the input stream.
 	 */
-	internal string get_word(out bool end_of_input) {
+	internal string get_word (out bool end_of_input) {
 		var buffer = new StringBuilder ();
 		var first = true;
 		while (is_identifier (get (false), first)) {
@@ -327,7 +327,7 @@ public abstract class GTeonoma.Parser : Object {
 	/**
 	 * Checks if there is more data in the input stream.
 	 */
-	public bool is_finished() {
+	public bool is_finished () {
 		consume_whitespace ();
 		return get (false) == '\0';
 	}
@@ -336,14 +336,14 @@ public abstract class GTeonoma.Parser : Object {
 	 * Check if a charcter is part of a valid identifier.
 	 * @param first is this the first character in the identifier?
 	 */
-	public static bool is_identifier(unichar c, bool first) {
+	public static bool is_identifier (unichar c, bool first) {
 		return c.isalpha () || c == '_' || (!first && c.isdigit ());
 	}
 
 	/**
 	 * Make a comma-separated list of names for a type.
 	 */
-	internal string names_for(Type type) {
+	internal string names_for (Type type) {
 		var buffer = new StringBuilder ();
 		var first = true;
 		foreach (var rule in rules[type]) {
@@ -368,7 +368,7 @@ public abstract class GTeonoma.Parser : Object {
 	 * Discard the last mark set.
 	 * @see mark_set
 	 */
-	internal void mark_clear() {
+	internal void mark_clear () {
 		assert (marks.length > 1);
 		marks[marks.length - 2] = marks[marks.length - 1];
 		marks.length--;
@@ -381,7 +381,7 @@ public abstract class GTeonoma.Parser : Object {
 	 * can then be rewound to the last marked position using {@link mark_rewind}
 	 * or the last mark can be discarded with {@link mark_clear}.
 	 */
-	internal void mark_set() {
+	internal void mark_set () {
 		marks += marks[marks.length - 1];
 	}
 
@@ -390,7 +390,7 @@ public abstract class GTeonoma.Parser : Object {
 	 *
 	 * Discard the current mark and set a new one at the current position.
 	 */
-	internal void mark_reset() {
+	internal void mark_reset () {
 		marks[marks.length - 2] = marks[marks.length - 1];
 	}
 
@@ -400,7 +400,7 @@ public abstract class GTeonoma.Parser : Object {
 	 * Reset the position of the input stream to the last position marked with
 	 * {@link mark_set} and pop this mark off the internal stack.
 	 */
-	internal void mark_rewind() {
+	internal void mark_rewind () {
 		assert (marks.length > 1);
 		marks.length--;
 		reset (marks[marks.length - 1].index);
@@ -411,7 +411,7 @@ public abstract class GTeonoma.Parser : Object {
 	 *
 	 * If no location is marked, the beginning of the input stream is described.
 	 */
-	internal source_location get_marked_location() {
+	internal source_location get_marked_location () {
 		if (marks.length > 1) {
 			return source_location () {
 				       source = this.source, line = marks[marks.length - 2].lines, offset = marks[marks.length - 2].offset
@@ -428,17 +428,17 @@ public abstract class GTeonoma.Parser : Object {
 	 * parser. There may be more parseable data in the stream. This can be tested
 	 * with {@link is_finished}.
 	 */
-	public Result parse(Type type, out Value @value) {
+	public Result parse (Type type, out Value @value) {
 		return parse_type (type, out @value, 0, 0);
 	}
 
-	public signal void attempting_parse(string rule, uint precedence, uint depth, int offset, int lines);
-	public signal void finished_parse(Result result, string rule, uint precedence, uint depth, int offset, int lines);
-	public signal void cache_hit(Result result, string rule, uint precedence, uint depth, int offset, int lines);
-	public signal void start_property(string rule, string property, uint depth);
-	public signal void end_property(string rule, string property, uint depth);
+	public signal void attempting_parse (string rule, uint precedence, uint depth, int offset, int lines);
+	public signal void finished_parse (Result result, string rule, uint precedence, uint depth, int offset, int lines);
+	public signal void cache_hit (Result result, string rule, uint precedence, uint depth, int offset, int lines);
+	public signal void start_property (string rule, string property, uint depth);
+	public signal void end_property (string rule, string property, uint depth);
 
-	internal Result parse_type(Type type, out Value @value, uint precedence, uint depth) {
+	internal Result parse_type (Type type, out Value @value, uint precedence, uint depth) {
 		var result = Result.FAIL;
 		bool end_of_input = false;
 		var old_error = errors;
@@ -518,7 +518,7 @@ public abstract class GTeonoma.Parser : Object {
 	/**
 	 * Note a parse error at the current position in the input stream.
 	 */
-	internal void push_error(string error) {
+	internal void push_error (string error) {
 		errors.add (error);
 	}
 
@@ -528,19 +528,19 @@ public abstract class GTeonoma.Parser : Object {
 	 * Readjust the input stream such that the next {@link get} will occur at the
 	 * correct place.
 	 */
-	protected abstract void reset(long index);
+	protected abstract void reset (long index);
 
 	/**
 	 * Examine all current parse errors.
 	 */
-	public void visit_errors(ErrorHandler handler) {
+	public void visit_errors (ErrorHandler handler) {
 		errors.visit (handler);
 	}
 
 	/**
 	 * Visit an error message in the current parser state.
 	 */
-	public delegate void ErrorHandler(source_location source, string error);
+	public delegate void ErrorHandler (source_location source, string error);
 }
 
 internal class GTeonoma.Memory : Object {
@@ -563,7 +563,7 @@ internal class GTeonoma.Memory : Object {
 
 internal class GTeonoma.MemoryBank : Object {
 	private Gee.TreeMap<int, Gee.TreeMap<int, Gee.List<Memory> > > memories;
-	internal MemoryBank() {
+	internal MemoryBank () {
 		memories = new Gee.TreeMap<int, Gee.TreeMap<int, Gee.List<Memory> > > ();
 	}
 
@@ -582,7 +582,7 @@ internal class GTeonoma.MemoryBank : Object {
 		}
 		return null;
 	}
-	internal new void set(int lines, int offset, Memory memory) {
+	internal new void set (int lines, int offset, Memory memory) {
 		Gee.TreeMap<int, Gee.List<Memory> > line;
 		if (memories.has_key (lines)) {
 			line = memories[lines];
@@ -623,7 +623,7 @@ public class GTeonoma.StringParser : Parser {
 		source = name;
 	}
 
-	protected override unichar get_c(ref long index) {
+	protected override unichar get_c (ref long index) {
 		int idx = (int) index;
 		if (idx >= data.length) {
 			return '\0';
@@ -633,7 +633,7 @@ public class GTeonoma.StringParser : Parser {
 		return c;
 	}
 
-	protected override void reset(long index) {}
+	protected override void reset (long index) {}
 }
 
 /**
@@ -664,7 +664,7 @@ public class GTeonoma.FileParser : Parser {
 		return new FileParser (rules, (owned) file, filename);
 	}
 
-	protected override unichar get_c(ref long index) {
+	protected override unichar get_c (ref long index) {
 		uint8[] chars = {};
 		while (chars.length < 7 && (chars.length == 0 || !((string) chars).validate (chars.length))) {
 			int val;
@@ -678,7 +678,7 @@ public class GTeonoma.FileParser : Parser {
 		return c == NO_CHAR ? '\0' : c;
 	}
 
-	protected override void reset(long index) {
+	protected override void reset (long index) {
 		file.seek (index, FileSeek.SET);
 	}
 }
@@ -709,7 +709,7 @@ public abstract class GTeonoma.Printer : Object {
 	 *
 	 * This supports the format modifiers.
 	 */
-	internal void append(string str) {
+	internal void append (string str) {
 		unichar c;
 		for (var i = 0; str.get_next_char (ref i, out c); ) {
 			if (c == '\n') {
@@ -773,19 +773,19 @@ public abstract class GTeonoma.Printer : Object {
 	 * To extend this class, this method will be called for every character to be
 	 * written to output. Nothing else need be done.
 	 */
-	protected abstract void append_c(unichar c);
+	protected abstract void append_c (unichar c);
 
 	/**
 	 * Write a typed object to the output stream.
 	 */
-	public void print(Value @value) {
+	public void print (Value @value) {
 		rules[@value.type ()].first ().print (this, @value);
 	}
 
 	/**
 	 * Write an object to the output stream, determining type automatically.
 	 */
-	public void print_obj(Object item) {
+	public void print_obj (Object item) {
 		Value @value = Value (item.get_type ());
 		@value.set_object (item);
 		print (@value);
@@ -794,7 +794,7 @@ public abstract class GTeonoma.Printer : Object {
 	/**
 	 * Write a list of objects to the output stream.
 	 */
-	public void print_all(Gee.List<Object> items, string separator = "%n") {
+	public void print_all (Gee.List<Object> items, string separator = "%n") {
 		var first = true;
 		foreach (var item in items) {
 			if (first) {
@@ -815,7 +815,7 @@ public class GTeonoma.ConsolePrinter : Printer {
 		base (rules);
 	}
 
-	internal override void append_c(unichar c) {
+	internal override void append_c (unichar c) {
 		stdout.puts (c.to_string ());
 	}
 }
@@ -838,7 +838,7 @@ public class GTeonoma.FilePrinter : Printer {
 		return new FilePrinter (rules, (owned) stream);
 	}
 
-	internal override void append_c(unichar c) {
+	internal override void append_c (unichar c) {
 		stream.puts (c.to_string ());
 	}
 }
@@ -863,7 +863,7 @@ public class GTeonoma.StringPrinter : Printer {
 		buffer = new StringBuilder ();
 	}
 
-	internal override void append_c(unichar c) {
+	internal override void append_c (unichar c) {
 		buffer.append_unichar (c);
 	}
 }

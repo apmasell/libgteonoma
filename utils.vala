@@ -30,7 +30,7 @@ internal class GTeonoma.StringLiteralParser : CustomParser<StringLiteral> {
 		HEX2,
 		END,
 		JUNK;
-		internal CustomParser.StateType get_state(bool has_quotes) {
+		internal CustomParser.StateType get_state (bool has_quotes) {
 			switch (this) {
 			 case StringState.CONTENTS:
 				 return has_quotes ? StateType.INTERMEDIATE : StateType.ACCEPTING;
@@ -60,7 +60,7 @@ internal class GTeonoma.StringLiteralParser : CustomParser<StringLiteral> {
 		this.has_quotes = has_quotes;
 	}
 
-	public override CustomParser.StateType next_state(unichar input) {
+	public override CustomParser.StateType next_state (unichar input) {
 		switch (state) {
 		 case StringState.INIT:
 			 if (input == '"') {
@@ -122,7 +122,7 @@ internal class GTeonoma.StringLiteralParser : CustomParser<StringLiteral> {
 		}
 	}
 
-	public override StringLiteral build_object(string str) {
+	public override StringLiteral build_object (string str) {
 		var literal = new StringLiteral ();
 		var buffer = new StringBuilder ();
 		for (var it = has_quotes ? 1 : 0; it < str.length - (has_quotes ? 1 : 0); it++) {
@@ -217,7 +217,7 @@ internal class GTeonoma.IdentifierParser : CustomParser<Identifier> {
 		START,
 		PART,
 		JUNK;
-		internal CustomParser.StateType get_state() {
+		internal CustomParser.StateType get_state () {
 			switch (this) {
 			 case IdentifierState.AT:
 			 case IdentifierState.START:
@@ -240,7 +240,7 @@ internal class GTeonoma.IdentifierParser : CustomParser<Identifier> {
 		this.allow_unicode = allow_unicode;
 	}
 
-	public override CustomParser.StateType next_state(unichar input) {
+	public override CustomParser.StateType next_state (unichar input) {
 		if (input == '@') {
 			if (state == IdentifierState.AT) {
 				return (state = IdentifierState.START).get_state ();
@@ -257,13 +257,13 @@ internal class GTeonoma.IdentifierParser : CustomParser<Identifier> {
 			return (state = IdentifierState.JUNK).get_state ();
 		}
 	}
-	public override Identifier build_object(string str) {
+	public override Identifier build_object (string str) {
 		return new Identifier (str);
 	}
 }
 [CCode (gir_namespace = "libgteonoma", gir_version = "1")]
 namespace GTeonoma {
-	public void log_to_console(Parser parser) {
+	public void log_to_console (Parser parser) {
 		parser.attempting_parse.connect ((rule, precedence, depth, offset, lines) => {
 							 for (var i = 0; i < depth; i++) {
 								 stdout.putc (' ');
