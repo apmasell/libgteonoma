@@ -6,7 +6,7 @@
  * object should implement this interface. When constructed, the {@link source}
  * property will be filled.
  */
-public interface GTeonoma.SourceInfo {
+public interface GTeonoma.SourceInfo : Object {
 	/**
 	 * The location in the source file where this object was parsed.
 	 */
