@@ -550,19 +550,19 @@ public class GTeonoma.Rules : Object {
 	 */
 	public void register_int (int size, Type type) throws RegisterError requires (type.is_fundamental ()) {
 		switch (size) {
-		 case 8:
+		 case 8 :
 			 this[type] = new Int8Rule (type);
 			 break;
 
-		 case 32:
+		 case 32 :
 			 this[type] = new Int32Rule (type);
 			 break;
 
-		 case 64:
+		 case 64 :
 			 this[type] = new Int64Rule (type);
 			 break;
 
-		 default:
+		 default :
 			 throw new RegisterError.BAD_TYPE ("Unsupported size.");
 		}
 	}
@@ -972,8 +972,8 @@ internal abstract class GTeonoma.IntegerRule : Rule {
 			  case '1' :
 			  case '2' :
 			  case '3' :
-			  case '4':
-			  case '5':
+			  case '4' :
+			  case '5' :
 			  case '6':
 			  case '7':
 				  accumulator = p[true].digit_value ();
