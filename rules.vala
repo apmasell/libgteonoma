@@ -527,6 +527,15 @@ public class GTeonoma.Rules : Object {
 		this[typeof (double)] = new FloatRule ();
 	}
 
+	public void register_enum<T> (string? name = null, owned NameTransformer? transformer = null) throws RegisterError {
+		var type = typeof (T);
+
+		if (!type.is_enum ()) {
+			throw new RegisterError.UNNECESSARY_FORMAT (@"Type $(type.name()) is not an enumeration.");
+		}
+		this[type] = new EnumRule (name?? type.name (), type, (owned) transformer);
+	}
+
 	/**
 	 * Add support for C string literals using {@link StringLiteral}.
 	 */
@@ -859,22 +868,34 @@ internal class GTeonoma.ObjectRule : Rule {
 	}
 }
 
+public delegate string? NameTransformer (string input);
+
 /**
  * Rule to parse an enum.
  */
 internal class GTeonoma.EnumRule : Rule {
 	EnumClass enum_class;
 	Type type;
-	public EnumRule (string? name, Type type) {
+	NameTransformer name_transformer;
+	public EnumRule (string? name, Type type, owned NameTransformer? name_transformer = null) {
 		this.name = name?? type.name ();
 		this.type = type;
 		this.enum_class = (EnumClass) type.class_ref ();
+		this.name_transformer = name_transformer;
 	}
 
 	internal override Result parse (Parser p, out Value @value, uint depth) {
 		@value = Value (type);
 		bool end_of_input;
 		var word = p.get_word (out end_of_input);
+		if (name_transformer != null) {
+			var original_word = word;
+			word = name_transformer (word);
+			if (word == null) {
+				p.push_error (@"Unexpected symbol `$original_word'.");
+				return end_of_input ? Result.EOI : Result.FAIL;
+			}
+		}
 		var enum_value = enum_class.get_value_by_nick (word);
 		if (enum_value == null) {
 			p.push_error (@"Unexpected symbol `$word'.");
