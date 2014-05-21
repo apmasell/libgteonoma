@@ -741,7 +741,7 @@ public abstract class GTeonoma.Printer : Object {
 					 indent--;
 					 break;
 
-				 case '%':
+				 case '%' :
 					 append_c ('%');
 					 last_space = false;
 					 break;

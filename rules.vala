@@ -128,7 +128,7 @@ internal struct GTeonoma.chunk {
 	 * The type relevant to this action.
 	 */
 	Type type;
-#if DEBUG
+	# if DEBUG
 	/**
 	 * Format this chunk back into something approximating the string that created it.
 	 */
@@ -140,10 +140,10 @@ internal struct GTeonoma.chunk {
 		 case Token.COMMIT :
 			 return "%%!";
 
-		 case Token.LIST :
+		 case Token.LIST:
 			 return @"%$(optional ? 'l' : 'L'){$(property)::$(type.name())}{$(word)}";
 
-		 case Token.PROPERTY :
+		 case Token.PROPERTY:
 			 return @"%$(optional ? 'p' : 'P'){$(property)}";
 
 		 case Token.SYMBOL:
