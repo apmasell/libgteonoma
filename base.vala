@@ -696,6 +696,73 @@ public class GTeonoma.FileParser : Parser {
 }
 
 /**
+ * Parse data in a stream/socket.
+ */
+public class GTeonoma.StreamParser : Parser {
+	private FileStream file;
+	private bool eof = false;
+	private StringBuilder builder = new StringBuilder ();
+
+	public StreamParser (Rules rules, owned FileStream file, string filename) {
+		base (rules);
+		this.file = (owned) file;
+		source = filename;
+	}
+	/**
+	 * Open an underlying file for reading and establish a parser.
+	 *
+	 * This will create a new parsing state to parse the contents of a file.
+	 *
+	 * @param rules the grammar rules to be used
+	 * @param filename the path to the file to be parsed
+	 * @return the new parser, or null if the file cannot be opened
+	 */
+	public static StreamParser? open (Rules rules, string filename) {
+		var file = FileStream.open (filename, "r");
+		if (file == null) {
+			return null;
+		}
+		return new StreamParser (rules, (owned) file, filename);
+	}
+
+	protected override unichar get_c (ref long index) {
+		uint8 chars[7];
+		var length = 0;
+		while (length < 7 && (length == 0 || !((string) chars).validate (length))) {
+			if (index >= builder.len) {
+				reset (index);
+				if (index >= builder.len) {
+					return '\0';
+				}
+			}
+			chars[length++] = builder.data[index];
+			index += 1;
+		}
+		var c = ((string) chars).get_char_validated (length);
+		if (c == NO_CHAR) {
+			warning ("Corrupt byte in file.");
+			return '\0';
+		} else {
+			return c;
+		}
+	}
+
+	protected override void reset (long index) {
+		if (eof) {
+			return;
+		}
+		while (builder.len <= index) {
+			int val = file.getc ();
+			if (val == FileStream.EOF) {
+				eof = true;
+				return;
+			}
+			builder.append_c ((char) val);
+		}
+	}
+}
+
+/**
  * Pretty printer for parsed object tree.
  */
 public abstract class GTeonoma.Printer : Object {
