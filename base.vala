@@ -391,6 +391,7 @@ public abstract class GTeonoma.Parser : Object {
 	 * Discard the current mark and set a new one at the current position.
 	 */
 	internal void mark_reset () {
+		assert (marks.length > 1);
 		marks[marks.length - 2] = marks[marks.length - 1];
 	}
 
