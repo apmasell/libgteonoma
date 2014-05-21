@@ -667,17 +667,27 @@ public class GTeonoma.FileParser : Parser {
 	}
 
 	protected override unichar get_c (ref long index) {
-		uint8[] chars = {};
-		while (chars.length < 7 && (chars.length == 0 || !((string) chars).validate (chars.length))) {
+		uint8 chars[7];
+		var length = 0;
+		while (length < 7 && (length == 0 || !((string) chars).validate (length))) {
 			int val;
 			if ((val = file.getc ()) == FileStream.EOF) {
 				return '\0';
 			}
-			chars += (uint8) val;
+			chars[length++] = (uint8) val;
 		}
 		index = file.tell ();
-		var c = ((string) chars).get_char_validated (chars.length);
-		return c == NO_CHAR ? '\0' : c;
+		if (index == -1) {
+			warning ("Can't seek in file.");
+			return '\0';
+		}
+		var c = ((string) chars).get_char_validated (length);
+		if (c == NO_CHAR) {
+			warning ("Corrupt byte in file.");
+			return '\0';
+		} else {
+			return c;
+		}
 	}
 
 	protected override void reset (long index) {
