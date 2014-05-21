@@ -792,9 +792,6 @@ internal class GTeonoma.ObjectRule : Rule {
 				 }
 				 break;
 
-			 case Token.MAP:
-				 assert_not_reached ();         //TODO
-
 			 case Token.SYMBOL:
 				 bool end_of_input;
 				 if (!p.check_string (chunks[index].word, name, out end_of_input)) {
