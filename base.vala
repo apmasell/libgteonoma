@@ -647,6 +647,7 @@ public class GTeonoma.FileParser : Parser {
 		base (rules);
 		this.file = (owned) file;
 		source = filename;
+		reset (0);
 	}
 	/**
 	 * Open an underlying file for reading and establish a parser.
