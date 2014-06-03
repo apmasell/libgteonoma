@@ -765,11 +765,12 @@ public class GTeonoma.StreamParser : Parser {
 /**
  * Pretty printer for parsed object tree.
  */
-public abstract class GTeonoma.Printer : Object {
+public class GTeonoma.Printer : Object {
+	private StringBuilder builder = new StringBuilder ();
 	/**
 	 * The current level of indentation for text on new lines.
 	 */
-	private int indent;
+	private uint indent;
 	/**
 	 * The rule set for the objects to be printed.
 	 */
@@ -779,8 +780,15 @@ public abstract class GTeonoma.Printer : Object {
 	 */
 	private bool last_space;
 
-	protected Printer (Rules rules) {
+	public string str {
+		get {
+			return builder.str;
+		}
+	}
+
+	protected Printer (Rules rules, uint indent = 0) {
 		this.rules = rules;
+		this.indent = indent;
 	}
 
 	/**
@@ -792,9 +800,9 @@ public abstract class GTeonoma.Printer : Object {
 		unichar c;
 		for (var i = 0; str.get_next_char (ref i, out c); ) {
 			if (c == '\n') {
-				append_c ('\n');
+				builder.append_c ('\n');
 				for (var count = 0; count < indent; count++) {
-					append_c ('\t');
+					builder.append_c ('\t');
 				}
 				last_space = true;
 			} else if (c == '%') {
@@ -809,26 +817,26 @@ public abstract class GTeonoma.Printer : Object {
 					 break;
 
 				 case '%' :
-					 append_c ('%');
+					 builder.append_c ('%');
 					 last_space = false;
 					 break;
 
 				 case 'n':
-					 append_c ('\n');
+					 builder.append_c ('\n');
 					 for (var count = 0; count < indent; count++) {
-						 append_c ('\t');
+						 builder.append_c ('\t');
 					 }
 					 last_space = true;
 					 break;
 
 				 case '-':
-					 append_c (' ');
+					 builder.append_c (' ');
 					 last_space = true;
 					 break;
 
 				 case '_':
 					 if (!last_space) {
-						 append_c (' ');
+						 builder.append_c (' ');
 						 last_space = true;
 					 }
 					 break;
@@ -840,25 +848,24 @@ public abstract class GTeonoma.Printer : Object {
 					 assert_not_reached ();
 				}
 			} else {
-				append_c (c);
+				builder.append_unichar (c);
 				last_space = c.isspace ();
 			}
 		}
 	}
 
 	/**
-	 * Write a Unicode character to output.
-	 *
-	 * To extend this class, this method will be called for every character to be
-	 * written to output. Nothing else need be done.
-	 */
-	protected abstract void append_c (unichar c);
-
-	/**
 	 * Write a typed object to the output stream.
 	 */
 	public void print (Value @value) {
-		rules[@value.type ()].first ().print (this, @value);
+		foreach (var rule in rules[@value.type ()]) {
+			var mark = builder.len;
+			if (rule.print (this, @value)) {
+				return;
+			}
+			builder.len = mark;
+		}
+		assert_not_reached ();
 	}
 
 	/**
@@ -883,66 +890,5 @@ public abstract class GTeonoma.Printer : Object {
 			}
 			print_obj (item);
 		}
-	}
-}
-
-/**
- * Pretty-print output to standard output
- */
-public class GTeonoma.ConsolePrinter : Printer {
-	public ConsolePrinter (Rules rules) {
-		base (rules);
-	}
-
-	internal override void append_c (unichar c) {
-		stdout.puts (c.to_string ());
-	}
-}
-
-/**
- * Pretty-print output to a file
- */
-public class GTeonoma.FilePrinter : Printer {
-	private FileStream stream;
-	private FilePrinter (Rules rules, owned FileStream stream) {
-		base (rules);
-		this.stream = (owned) stream;
-	}
-
-	public static FilePrinter? open (Rules rules, string filename) {
-		var stream = FileStream.open (filename, "w");
-		if (stream == null) {
-			return null;
-		}
-		return new FilePrinter (rules, (owned) stream);
-	}
-
-	internal override void append_c (unichar c) {
-		stream.puts (c.to_string ());
-	}
-}
-
-/**
- * Pretty-print output to a string
- */
-public class GTeonoma.StringPrinter : Printer {
-	private StringBuilder buffer;
-
-	/**
-	 * The output string.
-	 */
-	public string str {
-		get {
-			return buffer.str;
-		}
-	}
-
-	public StringPrinter (Rules rules) {
-		base (rules);
-		buffer = new StringBuilder ();
-	}
-
-	internal override void append_c (unichar c) {
-		buffer.append_unichar (c);
 	}
 }

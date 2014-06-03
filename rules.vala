@@ -20,7 +20,7 @@ internal abstract class GTeonoma.Rule : Object {
 	/**
 	 * Pretty-print the parsed value.
 	 */
-	internal abstract void print (Printer p, Value @value);
+	internal abstract bool print (Printer p, Value @value);
 }
 
 /**
@@ -696,10 +696,11 @@ internal class GTeonoma.FailRule : Rule {
 		return Result.ABORT;
 	}
 
-	internal override void print (Printer p, Value @value) {
+	internal override bool print (Printer p, Value @value) {
 		p.append ("\n");
 		p.append (error);
 		p.append ("\n");
+		return false;
 	}
 }
 
@@ -809,9 +810,11 @@ internal class GTeonoma.ObjectRule : Rule {
 		return @value;
 	}
 
-	internal override void print (Printer p, Value @value) requires (@value.type ().is_object ()) {
+	internal override bool print (Printer p, Value @value) requires (@value.type ().is_object ()) {
 		Object obj = @value.get_object ();
-		assert (obj.get_type ().is_a (type));
+		if (!obj.get_type ().is_a (type)) {
+			return false;
+		}
 		for (var index = 0; index < chunks.length; index++) {
 			switch (chunks[index].token) {
 			 case Token.BOOL:
@@ -825,8 +828,8 @@ internal class GTeonoma.ObjectRule : Rule {
 
 			 case Token.PROPERTY:
 				 var prop_value = get_prop (chunks[index].property, obj);
-				 if (chunks[index].optional && prop_value.type ().is_object () && prop_value.get_object () == null) {
-					 continue;
+				 if (!chunks[index].optional && prop_value.type ().is_object () && prop_value.get_object () == null) {
+					 return false;
 				 }
 				 if (prop_value.type ().is_object ()) {
 					 /*
@@ -842,7 +845,7 @@ internal class GTeonoma.ObjectRule : Rule {
 			 case Token.LIST:
 				 var list = get_prop (chunks[index].property, obj).get_object () as Gee.List<Object>;
 				 if (list == null) {
-					 continue;
+					 return false;
 				 }
 				 var first = true;
 				 foreach (var child in list) {
@@ -862,6 +865,7 @@ internal class GTeonoma.ObjectRule : Rule {
 				 break;
 			}
 		}
+		return true;
 	}
 }
 
@@ -903,10 +907,11 @@ internal class GTeonoma.EnumRule : Rule {
 		}
 	}
 
-	internal override void print (Printer p, Value @value) requires (@value.type () == type) {
+	internal override bool print (Printer p, Value @value) requires (@value.type () == type) {
 		var enum_value = enum_class.get_value (@value.get_enum ());
 		assert (enum_value != null);
 		p.append (enum_value.value_nick);
+		return true;
 	}
 }
 
@@ -943,7 +948,7 @@ internal class GTeonoma.FlagsRule : Rule {
 		return Result.OK;
 	}
 
-	internal override void print (Printer p, Value @value) requires (@value.type () == type) {
+	internal override bool print (Printer p, Value @value) requires (@value.type () == type) {
 		var first = true;
 		foreach (unowned FlagsValue flag in flags_class.values) {
 			if ((flag.value & @value.get_flags ()) == flag.value) {
@@ -955,6 +960,7 @@ internal class GTeonoma.FlagsRule : Rule {
 				p.append (flag.value_nick);
 			}
 		}
+		return true;
 	}
 }
 
@@ -1058,8 +1064,9 @@ internal class GTeonoma.Int8Rule : IntegerRule {
 	public Int8Rule (Type type) {
 		base (type);
 	}
-	internal override void print (Printer p, Value @value) {
+	internal override bool print (Printer p, Value @value) {
 		p.append (@value.get_char ().to_string ());
+		return true;
 	}
 	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (number > int8.MAX) {
@@ -1073,8 +1080,9 @@ internal class GTeonoma.Int32Rule : IntegerRule {
 	public Int32Rule (Type type) {
 		base (type);
 	}
-	internal override void print (Printer p, Value @value) {
+	internal override bool print (Printer p, Value @value) {
 		p.append (@value.get_int ().to_string ());
+		return true;
 	}
 	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (number > int32.MAX) {
@@ -1088,8 +1096,9 @@ internal class GTeonoma.Int64Rule : IntegerRule {
 	public Int64Rule (Type type) {
 		base (type);
 	}
-	internal override void print (Printer p, Value @value) {
+	internal override bool print (Printer p, Value @value) {
 		p.append (@value.get_int64 ().to_string ());
+		return true;
 	}
 	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (number > int64.MAX) {
@@ -1103,8 +1112,9 @@ internal class GTeonoma.UInt8Rule : IntegerRule {
 	public UInt8Rule (Type type) {
 		base (type);
 	}
-	internal override void print (Printer p, Value @value) {
+	internal override bool print (Printer p, Value @value) {
 		p.append (@value.get_uchar ().to_string ());
+		return true;
 	}
 	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (number > uint8.MAX || negate) {
@@ -1118,8 +1128,9 @@ internal class GTeonoma.UInt32Rule : IntegerRule {
 	public UInt32Rule (Type type) {
 		base (type);
 	}
-	internal override void print (Printer p, Value @value) {
+	internal override bool print (Printer p, Value @value) {
 		p.append (@value.get_uint ().to_string ());
+		return true;
 	}
 	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (number > uint32.MAX || negate) {
@@ -1133,8 +1144,9 @@ internal class GTeonoma.UInt64Rule : IntegerRule {
 	public UInt64Rule (Type type) {
 		base (type);
 	}
-	internal override void print (Printer p, Value @value) {
+	internal override bool print (Printer p, Value @value) {
 		p.append (@value.get_uint64 ().to_string ());
+		return true;
 	}
 	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
 		if (negate) {
@@ -1189,8 +1201,9 @@ internal class GTeonoma.FloatRule : Rule {
 			return p[false] == '\0' ?  Result.EOI : Result.FAIL;
 		}
 	}
-	internal override void print (Printer p, Value @value) requires (@value.type () == typeof (double)) {
+	internal override bool print (Printer p, Value @value) requires (@value.type () == typeof (double)) {
 		p.append (@value.get_double ().to_string ());
+		return true;
 	}
 }
 
@@ -1266,10 +1279,13 @@ internal class GTeonoma.CustomRule<T> : Rule {
 		}
 	}
 
-	internal override void print (Printer p, Value @value) requires (@value.type () == type) {
+	internal override bool print (Printer p, Value @value) requires (@value.type () == type) {
 		Object obj = @value.get_object ();
-		assert (obj.get_type ().is_a (type));
+		if (!obj.get_type ().is_a (type)) {
+			return false;
+		}
 		p.append (stringifier ((T) obj));
+		return true;
 	}
 }
 
