@@ -865,6 +865,11 @@ public class GTeonoma.Printer : Object {
 			}
 			builder.len = mark;
 		}
+		if (@value.type ().is_object ()) {
+			stderr.printf (@"Can't find parser for $(@value.get_object (). get_type ().name ()).");
+		} else {
+			stderr.printf (@"Can't find parser for $(@value.type ().name ()).");
+		}
 		assert_not_reached ();
 	}
 
