@@ -827,19 +827,23 @@ internal class GTeonoma.ObjectRule : Rule {
 				 break;
 
 			 case Token.PROPERTY:
+				 /*
+				  * Make our type more specific in the case of alternate rules. Otherwise, we might pick the wrong branch.
+				  */
 				 var prop_value = get_prop (chunks[index].property, obj);
-				 if (!chunks[index].optional && prop_value.type ().is_object () && prop_value.get_object () == null) {
-					 return false;
-				 }
 				 if (prop_value.type ().is_object ()) {
-					 /*
-					  * Make our type more specific in the case of alternate rules. Otherwise, we might pick the wrong branch.
-					  */
-					 var prop_obj = prop_value.get_object ();
-					 prop_value = Value (prop_obj.get_type ());
-					 prop_value.set_object (prop_obj);
+					 if (prop_value.get_object () == null) {
+						 if (!chunks[index].optional) {
+							 return false;
+						 }
+					 } else {
+						 var new_value = Value (prop_value.get_object ().get_type ());
+						 new_value.set_object (prop_value.get_object ());
+						 p.print (new_value);
+					 }
+				 } else {
+					 p.print (prop_value);
 				 }
-				 p.print (prop_value);
 				 break;
 
 			 case Token.LIST:
