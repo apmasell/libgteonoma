@@ -222,34 +222,34 @@ public class GTeonoma.Rules : Object {
 	}
 
 	NextPrecedence get_next_precedence (char modifier, string prop_name, Type type, Type prop_type, ref bool left_recursion, bool optional) throws RegisterError {
+		if (!type.is_a (prop_type)) {
+			if (modifier != '\0') {
+				throw new RegisterError.BAD_FORMAT (@"Property $(prop_name) requests a change in precedence from current rule, but it is not of the same type.");
+			}
+			left_recursion &= !optional;
+			return NextPrecedence.RESET;
+		}
 		switch (modifier) {
 		 case '\0':
 			 /* We could recurse infinitely, and the grammar hasn't told
 			  * use what to do. Assume we are to raise precedence. */
-			 if (left_recursion && type.is_a (prop_type)) {
+			 if (left_recursion) {
 				 left_recursion &= !optional;
 				 return NextPrecedence.HIGHER;
 			 } else {
 				 /* We are going in to some other rule family. */
-				 left_recursion &= !optional;
-				 return NextPrecedence.RESET;
+				 return NextPrecedence.SAME;
 			 }
 
 		 case '+':
-			 if (type.is_a (prop_type)) {
-				 left_recursion &= !optional;
-				 return NextPrecedence.HIGHER;
-			 } else {
-				 throw new RegisterError.LEFT_RECURSION (@"Property $(prop_name) requests higher precedence than current rule, but it is not of the same type.");
-			 }
+			 left_recursion &= !optional;
+			 return NextPrecedence.HIGHER;
 
 		 case '-':
-			 if (left_recursion && type.is_a (prop_type)) {
+			 if (left_recursion) {
 				 throw new RegisterError.LEFT_RECURSION (@"Property $(prop_name) requests lower precedence than current rule, but this will cause left-deep recursion.");
-			 } else if (type.is_a (prop_type)) {
-				 return NextPrecedence.RESET;
 			 } else {
-				 throw new RegisterError.LEFT_RECURSION (@"Property $(prop_name) requests lower precedence than current rule, but it is not of the same type.");
+				 return NextPrecedence.RESET;
 			 }
 
 		 default:
