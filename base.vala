@@ -853,6 +853,12 @@ public class GTeonoma.Printer : Object {
 			}
 		}
 	}
+	internal void append_raw (string str) {
+		builder.append (str);
+		if (builder.len > 0) {
+			last_space = ((char) builder.data[builder.len - 1]).isspace ();
+		}
+	}
 
 	/**
 	 * Write a typed object to the output stream.

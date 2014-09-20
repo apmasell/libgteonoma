@@ -701,7 +701,7 @@ internal class GTeonoma.FailRule : Rule {
 
 	internal override bool print (Printer p, Value @value) {
 		p.append ("\n");
-		p.append (error);
+		p.append_raw (error);
 		p.append ("\n");
 		return false;
 	}
@@ -917,7 +917,7 @@ internal class GTeonoma.EnumRule : Rule {
 	internal override bool print (Printer p, Value @value) requires (@value.type () == type) {
 		var enum_value = enum_class.get_value (@value.get_enum ());
 		assert (enum_value != null);
-		p.append (enum_value.value_nick);
+		p.append_raw (enum_value.value_nick);
 		return true;
 	}
 }
@@ -964,7 +964,7 @@ internal class GTeonoma.FlagsRule : Rule {
 				} else {
 					p.append ("%_");
 				}
-				p.append (flag.value_nick);
+				p.append_raw (flag.value_nick);
 			}
 		}
 		return true;
@@ -1072,7 +1072,7 @@ internal class GTeonoma.Int8Rule : IntegerRule {
 		base (type);
 	}
 	internal override bool print (Printer p, Value @value) {
-		p.append (@value.get_char ().to_string ());
+		p.append_raw (@value.get_char ().to_string ());
 		return true;
 	}
 	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
@@ -1088,7 +1088,7 @@ internal class GTeonoma.Int32Rule : IntegerRule {
 		base (type);
 	}
 	internal override bool print (Printer p, Value @value) {
-		p.append (@value.get_int ().to_string ());
+		p.append_raw (@value.get_int ().to_string ());
 		return true;
 	}
 	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
@@ -1104,7 +1104,7 @@ internal class GTeonoma.Int64Rule : IntegerRule {
 		base (type);
 	}
 	internal override bool print (Printer p, Value @value) {
-		p.append (@value.get_int64 ().to_string ());
+		p.append_raw (@value.get_int64 ().to_string ());
 		return true;
 	}
 	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
@@ -1120,7 +1120,7 @@ internal class GTeonoma.UInt8Rule : IntegerRule {
 		base (type);
 	}
 	internal override bool print (Printer p, Value @value) {
-		p.append (@value.get_uchar ().to_string ());
+		p.append_raw (@value.get_uchar ().to_string ());
 		return true;
 	}
 	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
@@ -1136,7 +1136,7 @@ internal class GTeonoma.UInt32Rule : IntegerRule {
 		base (type);
 	}
 	internal override bool print (Printer p, Value @value) {
-		p.append (@value.get_uint ().to_string ());
+		p.append_raw (@value.get_uint ().to_string ());
 		return true;
 	}
 	protected override bool set_value (uint64 number, bool negate, ref Value @value) {
@@ -1209,7 +1209,7 @@ internal class GTeonoma.FloatRule : Rule {
 		}
 	}
 	internal override bool print (Printer p, Value @value) requires (@value.type () == typeof (double)) {
-		p.append (@value.get_double ().to_string ());
+		p.append_raw (@value.get_double ().to_string ());
 		return true;
 	}
 }
@@ -1289,7 +1289,7 @@ internal class GTeonoma.CustomRule<T> : Rule {
 		if (!obj.get_type ().is_a (type)) {
 			return false;
 		}
-		p.append (stringifier ((T) obj));
+		p.append_raw (stringifier ((T) obj));
 		return true;
 	}
 }
