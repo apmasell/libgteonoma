@@ -394,11 +394,15 @@ public class GTeonoma.Rules : Object {
 				  case 'l':
 				  case 'L':
 					  state = ObjectParseState.START_LIST;
+					  first = true;
+					  modifier = '\0';
 					  break;
 
 				  case 'p':
 				  case 'P':
 					  state = ObjectParseState.START_PROPERTY;
+					  first = true;
+					  modifier = '\0';
 					  break;
 
 				  default:
@@ -414,8 +418,6 @@ public class GTeonoma.Rules : Object {
 				 if (c != '{') {
 					 throw new RegisterError.BAD_FORMAT (@"Expected { in format string for $(type.name()).\n");
 				 }
-				 first = true;
-				 modifier = '\0';
 				 switch (state) {
 				  case ObjectParseState.START_BOOL:
 					  state = ObjectParseState.PROPERTY_BOOL;
@@ -496,7 +498,8 @@ public class GTeonoma.Rules : Object {
 						  if (types == null || index >= types.length) {
 							  throw new RegisterError.MISSING_TYPES (@"Missing generic type information for list $(prop_name) in $(type.name()).\n");
 						  }
-						  chunks += chunk.list (prop_name, keyword, types[index++], optional, get_next_precedence (modifier, prop_name, type, types[index], ref left_recursion, optional));
+						  chunks += chunk.list (prop_name, keyword, types[index], optional, get_next_precedence (modifier, prop_name, type, types[index], ref left_recursion, optional));
+						  index++;
 						  break;
 					 }
 					 state = ObjectParseState.TEXT;
