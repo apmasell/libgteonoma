@@ -1244,7 +1244,6 @@ internal class GTeonoma.CustomRule<T> : Rule {
 			if (c == '\0') {
 				end_of_input = true;
 				p.push_error (@"Unexpected end of input in $name.");
-				p.mark_rewind ();
 				finished = true;
 				break;
 			}
@@ -1255,11 +1254,9 @@ internal class GTeonoma.CustomRule<T> : Rule {
 			 case CustomParser.StateType.FINAL :
 				 seen_accepting = true;
 				 last_buffer_len = buffer.len;
+				 p.mark_reset ();
 				 if (statetype == CustomParser.StateType.FINAL) {
 					 finished = true;
-					 p.mark_clear ();
-				 } else {
-					 p.mark_reset ();
 				 }
 				 break;
 
@@ -1268,12 +1265,12 @@ internal class GTeonoma.CustomRule<T> : Rule {
 
 			 case CustomParser.StateType.INVALID:
 				 p.push_error (@"Unexpected $(c.to_string()) in $name.");
-				 p.mark_rewind ();
 				 finished = true;
 				 break;
 			}
 		}
 		if (seen_accepting) {
+			p.mark_rewind ();
 			buffer.truncate (last_buffer_len);
 			var obj = (Object) state.build_object (buffer.str);
 			if (obj is SourceInfo) {
@@ -1282,6 +1279,7 @@ internal class GTeonoma.CustomRule<T> : Rule {
 			@value.set_object (obj);
 			return Result.OK;
 		} else {
+			p.mark_clear ();
 			return end_of_input ? Result.EOI : Result.FAIL;
 		}
 	}
